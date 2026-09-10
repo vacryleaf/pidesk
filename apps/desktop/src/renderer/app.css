@@ -23,3 +23,10 @@ body {
 .titlebar-no-drag {
   -webkit-app-region: no-drag;
 }
+
+/* 用户要求:UI 内容区鼠标指针保持默认,不随悬停/可编辑状态变化 */
+*,
+*::before,
+*::after {
+  cursor: default;
+}

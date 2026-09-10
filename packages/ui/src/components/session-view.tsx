@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Composer } from "./composer";
 import { ModelMenu, type ModelInfo } from "./model-menu";
 import { MessageList, type MessageView } from "./message-list";
@@ -18,6 +18,7 @@ export type SessionActionBridge = {
   sessionListModels?(sessionId: string): Promise<{ models: ModelInfo[] }>;
   sessionSetModel?(sessionId: string, provider: string, modelId: string): Promise<unknown>;
   sessionSetThinkingLevel?(sessionId: string, level: string): Promise<unknown>;
+  settingsGetModelConfig?(): Promise<{ preset: "ollama" | "custom-openai"; modelId: string }>;
 };
 
 type ModelView = { provider: string; modelId: string; thinkingLevel: string };
@@ -80,6 +81,26 @@ export function SessionView({ actions }: SessionViewProps) {
   const [modelViews, setModelViews] = useState<Record<string, ModelView>>({});
   // 本地用户消息序号:避免同一毫秒内多次发送产生重复 id
   const seqRef = useRef(0);
+  // 空态草稿模型:首页 Composer 直接选择,首次发送时应用到新建会话
+  const [draftModelView, setDraftModelView] = useState<ModelView>(DEFAULT_MODEL_VIEW);
+  const draftLoadedRef = useRef(false);
+
+  // 空态且未加载过时读取全局默认模型配置,回填草稿模型视图
+  useEffect(() => {
+    if (sessions.length !== 0 || draftLoadedRef.current) return;
+    if (!bridge?.settingsGetModelConfig) return;
+    draftLoadedRef.current = true;
+    bridge
+      .settingsGetModelConfig()
+      .then((cfg) => {
+        setDraftModelView({
+          provider: cfg.preset === "ollama" ? "ollama" : "custom-openai",
+          modelId: cfg.modelId || "选择模型",
+          thinkingLevel: "off",
+        });
+      })
+      .catch(() => {});
+  }, [sessions.length]);
 
   // 激活会话:activeId 失效(被关闭)时回退到首个会话
   const active = sessions.find((session) => session.id === activeId) ?? sessions[0] ?? null;
@@ -124,10 +145,10 @@ export function SessionView({ actions }: SessionViewProps) {
     void bridge?.sessionPrompt(sessionId, text);
   };
 
-  /** 空态首条消息:建会话 → 入 store 并激活 → 回填本地用户消息 → 下发首条 prompt */
+  /** 空态首条消息:建会话 → 入 store 并激活 → 回填本地用户消息 → 应用草稿模型 → 下发首条 prompt */
   const handleEmptySend = (text: string) => {
     if (!bridge) return;
-    void bridge.sessionCreate().then(({ sessionId }) => {
+    void bridge.sessionCreate().then(async ({ sessionId }) => {
       dispatch({ type: "SESSION_CREATED", id: sessionId });
       setActiveId(sessionId);
       const message: MessageView = {
@@ -154,7 +175,16 @@ export function SessionView({ actions }: SessionViewProps) {
           })
           .catch(() => {});
       }
-      void bridge.sessionPrompt(sessionId, text);
+      // 先把空态所选模型/档位应用到新会话,再下发首条 prompt(保证顺序)
+      if (draftModelView.modelId && draftModelView.modelId !== "选择模型") {
+        try {
+          await bridge.sessionSetModel?.(sessionId, draftModelView.provider, draftModelView.modelId);
+          await bridge.sessionSetThinkingLevel?.(sessionId, draftModelView.thinkingLevel);
+        } catch {
+          /* 模型设置失败不阻断首条 prompt */
+        }
+      }
+      await bridge.sessionPrompt(sessionId, text);
     });
   };
 
@@ -217,7 +247,28 @@ export function SessionView({ actions }: SessionViewProps) {
             </h1>
           </div>
           <div className="mx-auto w-[min(46rem,calc(100%-2rem))] min-w-0 shrink-0">
-            <Composer sending={false} placeholder="随心输入" onSend={handleEmptySend} onAbort={() => {}} />
+            <Composer
+              sending={false}
+              placeholder="随心输入"
+              onSend={handleEmptySend}
+              onAbort={() => {}}
+              footerLeft={
+                <ModelMenu
+                  provider={draftModelView.provider}
+                  modelId={draftModelView.modelId}
+                  thinkingLevel={draftModelView.thinkingLevel}
+                  onSetModel={(p, m) => setDraftModelView((prev) => ({ ...prev, provider: p, modelId: m }))}
+                  onSetThinkingLevel={(lv) => setDraftModelView((prev) => ({ ...prev, thinkingLevel: lv }))}
+                  listModels={() =>
+                    Promise.resolve(
+                      draftModelView.modelId && draftModelView.modelId !== "选择模型"
+                        ? [{ provider: draftModelView.provider, modelId: draftModelView.modelId, name: draftModelView.modelId, thinkingLevels: ["off"] }]
+                        : [],
+                    )
+                  }
+                />
+              }
+            />
           </div>
         </section>
       </div>

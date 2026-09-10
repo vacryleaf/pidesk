@@ -32,6 +32,7 @@ export function Composer({
 }: ComposerProps) {
   const [value, setValue] = useState("");
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const composingRef = useRef(false);
 
   // 自动高度:值变化时先归零再按 scrollHeight 撑开,封顶 6 行(jsdom 下 scrollHeight 恒 0,不影响测试)
   useEffect(() => {
@@ -54,6 +55,7 @@ export function Composer({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (composingRef.current || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
     if (e.key !== "Enter") return;
     if (e.shiftKey) return; // Shift+Enter 换行:走浏览器默认行为
     e.preventDefault(); // 阻止 Enter 在 textarea 里插换行
@@ -70,6 +72,8 @@ export function Composer({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onCompositionStart={() => { composingRef.current = true; }}
+          onCompositionEnd={() => { composingRef.current = false; }}
           rows={2}
           placeholder={placeholder}
           style={{ lineHeight: `${LINE_HEIGHT}px`, maxHeight: TEXTAREA_MAX_H }}
