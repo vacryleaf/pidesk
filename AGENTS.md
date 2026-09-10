@@ -35,9 +35,9 @@
 
 ## 交接快照(每次交接/里程碑必更新)
 
-- **阶段**:M1 编码中——T1(workspace+shared)按预消化模式重做。
-- **已完成**:E 详设全部过环节一(pi-protocol v1.0;m1-design v1.0 裁决:M1 单连接、dev 数据目录 `<仓库根>/.pidesk-dev`);m1-tasks **v1.1**(14 卡:T1~T13 含 T10a/b;T5/T6 对调——env 装配是状态机前置;外部评审四条吸收)。
-- **T1 状态**:四次派发失败,根因闭环 = 16k 临界 × pi 0.85.1 compaction bug(压缩即崩);盘上有第 4 次会话半成品(根配置 8 文件 + shared 2 源文件)待核验复用。
+- **阶段**:M1 编码中——T1 已合入(5e1e6bb),下一卡 T2(ui 底座+desktop 壳,32k)。
+- **已完成**:E 详设全部过环节一;m1-tasks v1.1(14 卡);T1 workspace+shared 全绿(typecheck/test6/build);派发环境已修复:models.json 声明真实窗口+强制 reasoning_effort=none(思考彻底禁用,速度提升~10x)。
+- **T1 状态**:已合入(5e1e6bb);四次失败根因=16k 临界 × pi compaction bug × 量化模型随机长 thinking,均已结构性修复(预消化+reasoning_effort=none+真实窗口声明)。
 - **下一步**:T1 预消化(核验→补齐→install→派最小卡)→ 按序 T2+。
 - **教训固化**:长输出命令必须 tail 截断;pi 16k 临界区是雷区;主线程 bash 工具超时 ≤60s,长任务 `setsid` 后台+轮询;可用 pnpm 在 `~/.npm-global/bin`(PATH 内的可能损坏)。
 
