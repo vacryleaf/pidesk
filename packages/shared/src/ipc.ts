@@ -93,7 +93,57 @@ export interface PushMap {
   };
 }
 
+/** push 载荷别名(渲染层订阅回调用) */
+export type SessionEventPayload = PushMap[(typeof PUSH_CHANNELS)["SESSION_EVENT"]];
+export type ProcessStatePayload = PushMap[(typeof PUSH_CHANNELS)["PROCESS_STATE"]];
+
 /** push 消息联合(渲染进程订阅用) */
 export type PushMessage = {
   [C in keyof PushMap]: { channel: C; payload: PushMap[C] };
 }[keyof PushMap];
+
+// ---------- preload 白名单桥类型面 ----------
+
+/** push 事件订阅的取消函数 */
+export type EventUnsubscribe = () => void;
+
+/** invoke 通道的请求/响应便捷别名(保证桥签名与 InvokeMap 契约一致) */
+type InvokeReq<C extends keyof InvokeMap> = InvokeMap[C][0];
+type InvokeRes<C extends keyof InvokeMap> = InvokeMap[C][1];
+
+/** 渲染进程唯一可见 API(window.pidesk):preload 实现须 satisfies 此类型锁死 */
+export interface PideskBridge {
+  sessionCreate(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SESSION_CREATE"]>>;
+  sessionPrompt(
+    sessionId: string,
+    message: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SESSION_PROMPT"]>>;
+  sessionAbort(sessionId: string): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SESSION_ABORT"]>>;
+  sessionGetState(
+    sessionId: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SESSION_GET_STATE"]>>;
+  sessionSetModel(
+    sessionId: string,
+    provider: string,
+    modelId: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SESSION_SET_MODEL"]>>;
+  sessionSetThinkingLevel(
+    sessionId: string,
+    level: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SESSION_SET_THINKING_LEVEL"]>>;
+  sessionListModels(
+    sessionId: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SESSION_LIST_MODELS"]>>;
+  // 注:apiKey 脱敏由 main 返回前完成,preload 仅透传类型
+  settingsGetModelConfig(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SETTINGS_GET_MODEL_CONFIG"]>>;
+  settingsSetModelConfig(
+    config: InvokeReq<(typeof INVOKE_CHANNELS)["SETTINGS_SET_MODEL_CONFIG"]>,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SETTINGS_SET_MODEL_CONFIG"]>>;
+  // ---- push 事件订阅:收主进程定向推送,返回取消函数 ----
+  onSessionEvent(
+    cb: (payload: PushMap[(typeof PUSH_CHANNELS)["SESSION_EVENT"]]) => void,
+  ): EventUnsubscribe;
+  onProcessState(
+    cb: (payload: PushMap[(typeof PUSH_CHANNELS)["PROCESS_STATE"]]) => void,
+  ): EventUnsubscribe;
+}
