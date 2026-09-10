@@ -9,8 +9,8 @@
  *   任意态 ──宿主主动 stop()──▶ stopped;L1 传输错误/非零退出──▶ crashed
  *
  * 退出兜底(DR-002):stop() 先 stdin.end() 优雅停 → 3s 后 SIGTERM →
- * 再 2s 后 SIGKILL(Linux;Windows taskkill /T 留 TODO,开发态为 WSL);
- * 三阶段定时器在进程先退出时全部清除。
+ * 再 2s 后 SIGKILL;Windows 平台两阶段兜底均改用 taskkill /T 树杀
+ * (宽限期先温和 taskkill,超时后 /F 强杀);三阶段定时器在进程先退出时全部清除。
  *
  * 依赖注入(防 mock 纠缠,T5b 教训):spawnImpl / rpcFactory / findInPath /
  * versionCheck 均可注入,单测传 fake,不 mock node:child_process。
@@ -59,6 +59,14 @@ function defaultFindInPath(name: string): string | null {
   }
   return null;
 }
+
+/** Windows 树杀默认实现:taskkill /T(可选 /F)终止整棵进程树 */
+const defaultKillTree = (pid: number, force: boolean): void => {
+  const args = ["/pid", String(pid), "/T"];
+  if (force) args.push("/F");
+  const child = nodeSpawn("taskkill", args, { stdio: "ignore", windowsHide: true });
+  child.on("error", () => { /* 已退/无 taskkill,忽略 */ });
+};
 
 /** 注入用子进程最小结构(真实 ChildProcess 的结构子集) */
 export interface ChildProcessLike {
@@ -122,6 +130,10 @@ export interface PiProcessDeps {
   findInPath?: (name: string) => string | null;
   /** 版本预检实现,默认 checkPiVersion */
   versionCheck?: VersionCheckLike;
+  /** 进程平台(默认 process.platform);测试可注入 "win32" */
+  platform?: NodeJS.Platform;
+  /** 树杀实现(仅 Windows 分支使用);默认 spawn taskkill */
+  killTree?: (pid: number, force: boolean) => void;
 }
 
 type StateListener = (state: PiProcessState, snapshot?: unknown) => void;
@@ -133,6 +145,8 @@ export class PiProcess {
   private readonly rpcFactory: RpcFactoryLike;
   private readonly findInPath: (name: string) => string | null;
   private readonly versionCheck: VersionCheckLike;
+  private readonly platform: NodeJS.Platform;
+  private readonly killTree: (pid: number, force: boolean) => void;
 
   private _state: PiProcessState = "spawning";
   private proc: ChildProcessLike | null = null;
@@ -165,6 +179,8 @@ export class PiProcess {
     this.rpcFactory = deps.rpcFactory ?? ((sendRaw) => new RpcClient(sendRaw));
     this.findInPath = deps.findInPath ?? defaultFindInPath;
     this.versionCheck = deps.versionCheck ?? checkPiVersion;
+    this.platform = deps.platform ?? process.platform;
+    this.killTree = deps.killTree ?? defaultKillTree;
   }
 
   /** 当前状态 */
@@ -336,17 +352,25 @@ export class PiProcess {
     } catch {
       /* 幂等,忽略 */
     }
-    // TODO(Windows):改用 taskkill /T /F <pid> 做树杀;当前开发态为 WSL/Linux
     this.termTimer = setTimeout(() => {
       try {
-        this.proc?.kill("SIGTERM");
+        if (this.platform === "win32" && this.proc?.pid !== undefined) {
+          this.killTree(this.proc.pid, false);
+        } else {
+          this.proc?.kill("SIGTERM");
+        }
       } catch {
         /* 已退,忽略 */
       }
     }, TERM_GRACE_MS);
     this.killTimer = setTimeout(() => {
+      const pid = this.proc?.pid;
       try {
-        this.proc?.kill("SIGKILL");
+        if (this.platform === "win32" && pid !== undefined) {
+          this.killTree(pid, true);
+        } else {
+          this.proc?.kill("SIGKILL");
+        }
       } catch {
         /* 已退,忽略 */
       }
