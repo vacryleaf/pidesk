@@ -1,0 +1,19 @@
+/* 设计令牌(CSS variables) */
+:root {
+  --bg-0: #141517;
+  --bg-1: #1b1d20;
+  --bg-2: #222528;
+  --text-0: #e4e6e8;
+  --text-1: #9aa0a6;
+  --hairline: #2e3237;
+  --focus: #4c8dff;
+  --ok: #3fb950;
+  --err: #f85149;
+  --warn: #d29922;
+}
+
+/* 附注:
+   - 字阶:12 / 13 / 14 / 16 / 20px(正文基线 14,行高 1.5)
+   - mono 栈:Cascadia Code → JetBrains Mono,
+     仅用于代码 / 命令 / 路径 / token 计数。
+*/
