@@ -46,20 +46,8 @@ function createWindow(): BrowserWindow {
     console.error(`[render-process-gone]`, details.reason),
   );
 
-  // 视觉自检(开发态):加载完成后截图到 /tmp/pidesk-screen.png,供主线程核验 UI 渲染
-  if (process.env.PIDESK_DEV_DEBUG) {
-    wc.once("did-finish-load", () => {
-      setTimeout(() => {
-        void wc
-          .capturePage()
-          .then((img) => {
-            fs.writeFileSync("/tmp/pidesk-screen.png", img.toPNG());
-            console.log("[screenshot] /tmp/pidesk-screen.png");
-          })
-          .catch((err) => console.error("[screenshot]", err));
-      }, 2500);
-    });
-  }
+  // 注意:WSLg 劣化态下 capturePage 会触发 renderer crash(共享内存 ESRCH),
+  // 视觉验证改用浏览器开 renderer URL 或肉眼;capturePage 仅在正常桌面环境启用
   return win;
 }
 

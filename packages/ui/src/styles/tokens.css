@@ -10,10 +10,37 @@
   --ok: #3fb950;
   --err: #f85149;
   --warn: #d29922;
+
+  /* ——— 语义字阶(对齐 Codex 系密度规范)———
+     正文基线 14px;辅助文本 13px;meta/标签 12px。
+     行高随字阶给定,保证垂直节奏一致。 */
+  --text-xs: 12px;
+  --lh-xs: 16px;
+  --text-sm: 13px;
+  --lh-sm: 19px;
+  --text-base: 14px;
+  --lh-base: 21px;
+  --text-lg: 16px;
+  --lh-lg: 24px;
+
+  /* ——— 语义圆角(形态)———
+     按角色分档,不做全局单一半径。 */
+  --radius-ctl: 8px; /* 控件 / 图标按钮 */
+  --radius-row: 10px; /* 导航行 / 标签容器 */
+  --radius-menu: 12px; /* 菜单 / 浮层 */
+  --radius-composer: 20px; /* 多行输入框 */
+
+  /* UI 层字重:445(需可变字体回退;不支持可变字体时回落 normal) */
+  --font-weight-ui: 445;
 }
 
 /* 附注:
    - 字阶:12 / 13 / 14 / 16 / 20px(正文基线 14,行高 1.5)
+   - 语义字阶变量:--text-xs/sm/base/lg 配 --lh-xs/sm/base/lg,
+     正文 14px、辅助 13px、meta 12px。
+   - 字重:UI 层用 --font-weight-ui(445);`font-weight: 445` 需可变字体,
+     非可变字体回退 normal,故声明写作 `font-weight: var(--font-weight-ui, normal)`。
+   - 形态:控件 8px / 行与标签 10px / 菜单 12px / 输入 20px(--radius-*)。
    - mono 栈:Cascadia Code → JetBrains Mono,
      仅用于代码 / 命令 / 路径 / token 计数。
 */

@@ -1,0 +1,4 @@
+/* Tailwind4(CSS-first)+ 设计令牌;@source 显式扫描 ui 组件类 */
+@import "tailwindcss";
+@import "@pidesk/ui/styles.css";
+@source "../../../packages/ui/src";

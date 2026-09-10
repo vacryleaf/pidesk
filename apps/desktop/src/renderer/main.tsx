@@ -1,6 +1,6 @@
 // 渲染进程入口:挂载 React(沙箱环境,禁 require/Ndo API)
 import { createRoot } from "react-dom/client";
-import "@pidesk/ui/styles.css";
+import "./app.css";
 import App from "./app";
 
 // 挂载到 index.html 中的 #root 节点
