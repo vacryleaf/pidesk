@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+out/
+build/
+release/
+
+# Electron / packaging artifacts
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.snap
+
+# Runtime / local data
+resources/pi/*.tar.gz
+resources/pi/pi
+resources/pi/pi.exe
+
+# Logs & caches
+*.log
+.cache/
+.vite/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.idea/
+.vs/
+.vscode/
+Thumbs.db
+.DS_Store
