@@ -9,7 +9,15 @@
  * - 解析/执行失败(退出码非 0、超时、进程错误)→ 抛错。
  */
 
-import { execFile } from "node:child_process";
+import { execFile, type ExecFileException } from "node:child_process";
+
+/** 回调风格执行器(execFile 的最小结构类型):便于测试注入 fake,避开 mock 纠缠 */
+type ExecFileLike = (
+  file: string,
+  args: readonly string[],
+  options: { timeout?: number; maxBuffer?: number },
+  callback: (err: ExecFileException | null, stdout: string, stderr: string) => void,
+) => unknown;
 
 /** 版本检查返回结构 */
 export interface VersionCheckResult {
@@ -68,7 +76,7 @@ export function checkPiVersion(
   binary: string,
   expected: string,
   onWarn?: VersionWarnListener,
-  injectExec: typeof execFile = execFile,
+  injectExec: ExecFileLike = execFile,
 ): Promise<VersionCheckResult> {
   return new Promise((resolve, reject) => {
     injectExec(
@@ -80,7 +88,7 @@ export function checkPiVersion(
         if (err) {
           const msg =
             (err as NodeJS.ErrnoException & { killed?: boolean }).killed ||
-            err.signal === "SIGTERM"
+            (err as NodeJS.ErrnoException & { signal?: string }).signal === "SIGTERM"
               ? `pi --version 执行超时(>10s): ${binary}`
               : `pi --version 执行失败(${binary}): ${err.message}`;
           reject(new Error(msg));

@@ -2,13 +2,19 @@
 // 纪律:不在单测里依赖真 pi,子进程执行一律通过第 4 参 injectExec 注入 fake,
 // 不 mock node:child_process(规避 vi.mock hoisting/importOriginal 展开引发的异常调用)。
 import { describe, it, expect, vi } from "vitest";
+import { execFile } from "node:child_process";
 import { resolvePiBinary, checkPiVersion } from "./version.js";
 
-/** 构造 fake 执行器:记录调用实参,并以给定 stdout/err 回调 cb */
+/** 构造 fake 执行器:记录调用实参,并以给定 stdout/err 回调 cb(签名对齐 ExecFileLike) */
 function fakeExec(stdout: string, err?: Error) {
   const fake = vi.fn(
-    (_bin: string, _args: string[], _opts: unknown, cb: Function) => {
-      cb(err, stdout, "");
+    (
+      _bin: string,
+      _args: readonly string[],
+      _opts: unknown,
+      cb: (e: Error | null, out: string, errStr: string) => void,
+    ) => {
+      cb(err ?? null, stdout, "");
       return undefined;
     },
   );
