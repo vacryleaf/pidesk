@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ---------------- Linux:静态检查 + L1/L2 测试 + 构建 ---------------- #
   linux:
@@ -66,7 +70,6 @@ jobs:
   # ---------------- Windows:NSIS 安装包产物 ---------------- #
   windows:
     name: Windows NSIS 产物
-    needs: linux
     runs-on: windows-2022
     timeout-minutes: 30
     steps:
@@ -83,6 +86,16 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+
+      - name: 缓存 Electron/electron-builder
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/electron-builder/Cache
+          key: ${{ runner.os }}-electron-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
