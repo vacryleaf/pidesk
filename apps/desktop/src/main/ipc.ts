@@ -5,6 +5,13 @@
 import type { BrowserWindow, IpcMain } from "electron";
 import { INVOKE_CHANNELS, type InvokeMap } from "@pidesk/shared";
 import type { PiHostManager } from "./pi-host-manager.js";
+import {
+  loadConfig,
+  removeProvider,
+  saveAppPreferences,
+  setDefaultModel,
+  upsertProvider,
+} from "./config-center.js";
 
 /** ipcMain 最小结构(便于测试注入) */
 type IpcMainLike = Pick<IpcMain, "handle">;
@@ -23,6 +30,7 @@ export function registerIpcHandlers(
   ipc: IpcMainLike,
   manager: PiHostManager,
   win: BrowserWindow,
+  dataDir: string,
 ): void {
   // ---- 会话生命周期 ----
   handle(ipc, INVOKE_CHANNELS.SESSION_CREATE, async () => ({
@@ -69,4 +77,23 @@ export function registerIpcHandlers(
   handle(ipc, INVOKE_CHANNELS.SETTINGS_SET_MODEL_CONFIG, (config) =>
     manager.setModelConfig(config),
   );
+
+  // ---- config-center(写操作后返回最新快照;快照不含明文 apiKey)----
+  handle(ipc, INVOKE_CHANNELS.CONFIG_GET, () => loadConfig(dataDir));
+  handle(ipc, INVOKE_CHANNELS.CONFIG_APP_SAVE, (app) => {
+    saveAppPreferences(dataDir, app);
+    return loadConfig(dataDir);
+  });
+  handle(ipc, INVOKE_CHANNELS.CONFIG_PROVIDER_UPSERT, ({ profile, apiKey }) => {
+    upsertProvider(dataDir, profile, apiKey);
+    return loadConfig(dataDir);
+  });
+  handle(ipc, INVOKE_CHANNELS.CONFIG_PROVIDER_REMOVE, ({ id }) => {
+    removeProvider(dataDir, id);
+    return loadConfig(dataDir);
+  });
+  handle(ipc, INVOKE_CHANNELS.CONFIG_DEFAULT_MODEL_SET, ({ defaultModel }) => {
+    setDefaultModel(dataDir, defaultModel);
+    return loadConfig(dataDir);
+  });
 }

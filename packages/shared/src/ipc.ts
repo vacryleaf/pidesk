@@ -18,6 +18,11 @@ export const INVOKE_CHANNELS = {
   WINDOW_MINIMIZE: "pidesk:window:minimize",
   WINDOW_TOGGLE_MAXIMIZE: "pidesk:window:toggleMaximize",
   WINDOW_CLOSE: "pidesk:window:close",
+  CONFIG_GET: "pidesk:config:get",
+  CONFIG_APP_SAVE: "pidesk:config:appSave",
+  CONFIG_PROVIDER_UPSERT: "pidesk:config:providerUpsert",
+  CONFIG_PROVIDER_REMOVE: "pidesk:config:providerRemove",
+  CONFIG_DEFAULT_MODEL_SET: "pidesk:config:defaultModelSet",
 } as const;
 
 // (C) push 通道:主进程单向推送
@@ -55,6 +60,34 @@ export type PideskProcessState =
   | "crashed"
   | "stopped";
 
+// ---------- config-center 数据模型(与 main/config-center 落盘结构一致) ----------
+
+export type ProviderPreset = "ollama" | "custom-openai";
+
+export type ProviderModel = { id: string; name?: string };
+
+export type ProviderProfile = {
+  id: string; // pi provider id,如 "ollama" / "custom-openai" / 自定义唯一 id
+  name: string;
+  preset: ProviderPreset;
+  baseUrl: string;
+  models: ProviderModel[];
+  defaultModelId?: string;
+  /** 是否把 key 持久化到 auth.json;false 时只回显 hasKey=true */
+  saveKey: boolean;
+  enabled: boolean;
+};
+
+export type AppPreferences = {
+  proxy: { http?: string; https?: string };
+  defaultModel?: { provider: string; modelId: string; thinkingLevel?: string };
+};
+
+export type ConfigSnapshot = {
+  app: AppPreferences;
+  providers: Array<ProviderProfile & { hasKey: boolean }>;
+};
+
 // ---------- (B) invoke:通道 → [请求, 响应] ----------
 
 import type { JsonAgentSessionEvent, ExtensionUIRequest, ExtensionError } from "./protocol";
@@ -88,6 +121,18 @@ export interface InvokeMap {
   [INVOKE_CHANNELS.WINDOW_MINIMIZE]: [Record<string, never>, { maximized: boolean }];
   [INVOKE_CHANNELS.WINDOW_TOGGLE_MAXIMIZE]: [Record<string, never>, { maximized: boolean }];
   [INVOKE_CHANNELS.WINDOW_CLOSE]: [Record<string, never>, { maximized: boolean }];
+  // ---- config-center(写操作返回最新快照;快照不含明文 apiKey)----
+  [INVOKE_CHANNELS.CONFIG_GET]: [Record<string, never>, ConfigSnapshot];
+  [INVOKE_CHANNELS.CONFIG_APP_SAVE]: [AppPreferences, ConfigSnapshot];
+  [INVOKE_CHANNELS.CONFIG_PROVIDER_UPSERT]: [
+    { profile: ProviderProfile; apiKey?: string },
+    ConfigSnapshot,
+  ];
+  [INVOKE_CHANNELS.CONFIG_PROVIDER_REMOVE]: [{ id: string }, ConfigSnapshot];
+  [INVOKE_CHANNELS.CONFIG_DEFAULT_MODEL_SET]: [
+    { defaultModel?: AppPreferences["defaultModel"] },
+    ConfigSnapshot,
+  ];
 }
 
 // ---------- (C) push:主进程 → 渲染进程 ----------
@@ -154,6 +199,21 @@ export interface PideskBridge {
   windowMinimize(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["WINDOW_MINIMIZE"]>>;
   windowToggleMaximize(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["WINDOW_TOGGLE_MAXIMIZE"]>>;
   windowClose(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["WINDOW_CLOSE"]>>;
+  // ---- config-center ----
+  configGet(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_GET"]>>;
+  configAppSave(
+    app: InvokeReq<(typeof INVOKE_CHANNELS)["CONFIG_APP_SAVE"]>,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_APP_SAVE"]>>;
+  configProviderUpsert(
+    profile: InvokeReq<(typeof INVOKE_CHANNELS)["CONFIG_PROVIDER_UPSERT"]>["profile"],
+    apiKey?: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_PROVIDER_UPSERT"]>>;
+  configProviderRemove(
+    id: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_PROVIDER_REMOVE"]>>;
+  configDefaultModelSet(
+    defaultModel?: InvokeReq<(typeof INVOKE_CHANNELS)["CONFIG_DEFAULT_MODEL_SET"]>["defaultModel"],
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_DEFAULT_MODEL_SET"]>>;
   // ---- push 事件订阅:收主进程定向推送,返回取消函数 ----
   onSessionEvent(
     cb: (payload: PushMap[(typeof PUSH_CHANNELS)["SESSION_EVENT"]]) => void,

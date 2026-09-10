@@ -6,10 +6,12 @@ import type { IpcRendererEvent } from "electron";
 import {
   INVOKE_CHANNELS,
   PUSH_CHANNELS,
+  type AppPreferences,
   type EventUnsubscribe,
   type PideskBridge,
   type ProcessStatePayload,
   type ProviderConfig,
+  type ProviderProfile,
   type PushMap,
   type SessionEventPayload,
 } from "@pidesk/shared/ipc";
@@ -53,6 +55,16 @@ const bridge = {
   windowMinimize: () => ipcRenderer.invoke(INVOKE_CHANNELS.WINDOW_MINIMIZE, {}),
   windowToggleMaximize: () => ipcRenderer.invoke(INVOKE_CHANNELS.WINDOW_TOGGLE_MAXIMIZE, {}),
   windowClose: () => ipcRenderer.invoke(INVOKE_CHANNELS.WINDOW_CLOSE, {}),
+  // ---- config-center(写操作返回最新 ConfigSnapshot;preload 仅透传)----
+  configGet: () => ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_GET, {}),
+  configAppSave: (app: AppPreferences) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_APP_SAVE, app),
+  configProviderUpsert: (profile: ProviderProfile, apiKey?: string) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_PROVIDER_UPSERT, { profile, apiKey }),
+  configProviderRemove: (id: string) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_PROVIDER_REMOVE, { id }),
+  configDefaultModelSet: (defaultModel?: AppPreferences["defaultModel"]) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_DEFAULT_MODEL_SET, { defaultModel }),
   // ---- push 事件订阅 ----
   onSessionEvent: (cb: (payload: SessionEventPayload) => void) =>
     subscribe(PUSH_CHANNELS.SESSION_EVENT, cb),

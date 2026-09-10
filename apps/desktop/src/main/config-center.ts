@@ -8,32 +8,20 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import type {
+  AppPreferences,
+  ConfigSnapshot,
+  ProviderModel,
+  ProviderProfile,
+} from "@pidesk/shared";
 
-export type ProviderPreset = "ollama" | "custom-openai";
-
-export type ProviderModel = { id: string; name?: string };
-
-export type ProviderProfile = {
-  id: string; // pi provider id,如 "ollama" / "custom-openai" / 自定义唯一 id
-  name: string;
-  preset: ProviderPreset;
-  baseUrl: string;
-  models: ProviderModel[];
-  defaultModelId?: string;
-  /** 是否把 key 持久化到 auth.json;false 时只回显 hasKey=true(运行时 key 由后续卡片 env 注入) */
-  saveKey: boolean;
-  enabled: boolean;
-};
-
-export type AppPreferences = {
-  proxy: { http?: string; https?: string };
-  defaultModel?: { provider: string; modelId: string; thinkingLevel?: string };
-};
-
-export type ConfigSnapshot = {
-  app: AppPreferences;
-  providers: Array<ProviderProfile & { hasKey: boolean }>;
-};
+export type {
+  AppPreferences,
+  ConfigSnapshot,
+  ProviderModel,
+  ProviderPreset,
+  ProviderProfile,
+} from "@pidesk/shared";
 
 /** models.json 单 provider 条目(pi 上游 provider 配置结构子集) */
 interface ProviderEntry {

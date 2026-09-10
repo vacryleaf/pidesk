@@ -90,7 +90,7 @@ app.whenReady().then(() => {
   // 对齐 m1-design §5:打包态 userData,开发态 .pidesk-dev
   const dataDir = app.isPackaged ? app.getPath("userData") : resolveDataDir(process.env);
   const manager = new PiHostManager(dataDir);
-  registerIpcHandlers(ipcMain, manager, win);
+  registerIpcHandlers(ipcMain, manager, win, dataDir);
 });
 
 // 全窗口关闭时退出(linux/win 无 dock 驻留需求,统一 quit)
