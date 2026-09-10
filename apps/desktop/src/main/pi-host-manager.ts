@@ -1,12 +1,14 @@
-// 主进程 pi 宿主管理器(T8a):封装 PiPool + 会话注册表,面向 IPC 层提供语义路由。
+// 主进程 pi 宿主管理器(T8a;T11a 接配置落盘):封装 PiPool + 会话注册表,面向 IPC 层提供语义路由。
 // 职责(m1-design §7):
 // - createSession(win):池 acquire + 进程事件挂接(SESSION_EVENT / PROCESS_STATE 按 sessionId 定向 push);
 // - destroySession(id):池 release + 出册;
 // - invoke 语义路由:prompt / abort / get_state / set_model / set_thinking_level / get_available_models;
 // - extension_ui_request 的 confirm/select/input 暂入队(M2 前不弹),notify 及其余帧经 SESSION_EVENT 透传。
 
+import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import type { BrowserWindow } from "electron";
+import { loadProviderConfig, saveProviderConfig } from "./settings-store.js";
 import { PiPool, bootstrapDataDir, type PoolProcessLike } from "@pidesk/pi-host";
 import {
   PUSH_CHANNELS,
@@ -34,14 +36,6 @@ interface SessionRecord {
   pendingUiRequests: ExtensionUIRequest[];
 }
 
-/** 内存默认 ProviderConfig(T11a 接落盘前的占位) */
-const DEFAULT_PROVIDER_CONFIG: ProviderConfig = {
-  preset: "ollama",
-  baseUrl: "http://localhost:11434/v1",
-  modelId: "",
-  saveKey: false,
-};
-
 /** get_available_models 返回的 Model 结构子集(仅取映射所需字段,防御式访问) */
 interface RawModel {
   provider?: unknown;
@@ -53,10 +47,11 @@ export class PiHostManager {
   private readonly pool: PiPool;
   /** 会话注册表:sessionId → {process, win} */
   private readonly sessions = new Map<string, SessionRecord>();
-  /** 模型连接配置(T11a 前仅内存) */
-  private modelConfig: ProviderConfig = { ...DEFAULT_PROVIDER_CONFIG };
+  /** 数据目录(T11a:模型连接配置落盘 <dataDir>/pi-agent/{models,auth}.json) */
+  private readonly dataDir: string;
 
   constructor(dataDir: string = resolveDataDir(process.env)) {
+    this.dataDir = dataDir;
     // 数据目录 bootstrap(幂等):建目录 + 原子写 settings.json
     bootstrapDataDir(dataDir);
     this.pool = new PiPool({ dataDir });
@@ -136,22 +131,61 @@ export class PiHostManager {
     return { models };
   }
 
-  // ---- 模型连接配置(T11a 前内存态)----
+  // ---- 模型连接配置(T11a:settings-store 落盘)----
 
-  /** settings:getModelConfig:返回前 apiKey 脱敏(契约注释要求) */
+  /** settings:getModelConfig:读 <dataDir>/pi-agent/{models,auth}.json 还原;返回前 apiKey 脱敏(契约注释要求) */
   getModelConfig(): ProviderConfig {
-    return this.redactConfig(this.modelConfig);
+    return this.redactConfig(loadProviderConfig(this.dataDir));
   }
 
-  /** settings:setModelConfig:内存保存并回显脱敏副本 */
-  setModelConfig(config: ProviderConfig): ProviderConfig {
-    this.modelConfig = { ...config };
-    return this.redactConfig(this.modelConfig);
+  /**
+   * settings:setModelConfig:落盘(models.json + auth.json 若勾选保存)→ 重启池内全部会话使配置生效 → 回显脱敏副本。
+   * 注:模型连接配置对 pi 进程需重启生效,M1 无热更新,故保存成功即 restartAll。
+   */
+  async setModelConfig(config: ProviderConfig): Promise<ProviderConfig> {
+    saveProviderConfig(this.dataDir, config);
+    await this.restartAll();
+    return this.redactConfig(loadProviderConfig(this.dataDir));
   }
 
-  /** apiKey 脱敏:存在则替换为 "***" */
+  /** apiKey 脱敏:存在则替换为 "********"(M1 简化:不做前 4 后 4 形态,不回显真实值) */
   private redactConfig(config: ProviderConfig): ProviderConfig {
-    return { ...config, ...(config.apiKey ? { apiKey: "***" } : {}) };
+    return { ...config, ...(config.apiKey ? { apiKey: "********" } : {}) };
+  }
+
+  /**
+   * 重启池内全部会话(模型连接配置变更后生效用):
+   * 逐会话先经 get_state 取 sessionFile(上下文恢复用,取不到按无文件处理),
+   * 再 release+acquire 复用 sessionFile 重建进程,成功后 switch_session 恢复上下文。
+   * 单会话失败仅打日志不中断其余会话(acquire 失败时池内已自行走崩溃重试退避)。
+   */
+  async restartAll(): Promise<void> {
+    for (const sessionId of [...this.sessions.keys()]) {
+      const record = this.sessions.get(sessionId);
+      if (!record) continue;
+      // 取原会话文件(重启后 switch_session 恢复上下文)
+      let sessionFile: string | null = null;
+      try {
+        const st = await this.pool.request(sessionId, "get_state");
+        const f = st.success ? (st.data as { sessionFile?: unknown } | undefined)?.sessionFile : undefined;
+        if (typeof f === "string") sessionFile = f;
+      } catch {
+        // 取不到 state 按无会话文件重启
+      }
+      this.pool.release(sessionId);
+      try {
+        const proc = (await this.pool.acquire(sessionId, { sessionFile })) as HostProcessLike;
+        record.process = proc;
+        this.wireProcess(sessionId, record);
+        if (sessionFile && existsSync(sessionFile)) {
+          await proc.request("switch_session", { sessionPath: sessionFile });
+        }
+      } catch (err) {
+        console.error(
+          `[pi-host] 会话 ${sessionId} 配置生效重启失败: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
   }
 
   // ---- 内部:事件挂接与进程实例追踪 ----
