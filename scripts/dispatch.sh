@@ -8,10 +8,9 @@
 #     -v  验收命令(必填,子线程必须自行跑到通过为止,如 "pnpm -r build && pnpm -r test")
 #     -d  工作目录(默认 /root/pidesk;子线程会话按 cwd 归档)
 #     -c  返工模式:续接该工作目录最近的子线程会话(需附具体问题清单与原始报错)
-#     -m  模型覆盖(默认 16k):16k | 32k | 9b
+#     -m  模型覆盖(默认 16k):16k | 32k
 #         16k = qwen3.8:q3xl-16k(27B,默认;任务卡必须按 16k 上下文预算拆分)
 #         32k = qwen3.8:q3xl-32k(27B,任务需中等量文档读取时)
-#         9b  = qwen3.8-9b-coder:128k(广读大量文件/长文档但能力要求低的任务)
 #
 # 注意:① 同一工作目录下并行派发会混淆 --continue 的会话归属,请串行派发;
 #       ② 模型切换有冷启动(卸载/加载 ~25s+),串行任务尽量同模型;
@@ -21,7 +20,7 @@ set -euo pipefail
 
 WORKER_PI_DIR="/root/.pi-worker"
 MODEL_DEFAULT="ollama/qwen3.8:q3xl-16k"
-declare -A MODELS=( [16k]="$MODEL_DEFAULT" [32k]="ollama/qwen3.8:q3xl-32k" [9b]="ollama/qwen3.8-9b-coder:128k" )
+declare -A MODELS=( [16k]="$MODEL_DEFAULT" [32k]="ollama/qwen3.8:q3xl-32k" )
 
 TASK="" VERIFY="" CWD="/root/pidesk" CONT=0 MKEY="16k"
 while getopts "t:v:d:cm:" opt; do
@@ -35,7 +34,7 @@ while getopts "t:v:d:cm:" opt; do
   esac
 done
 [ -n "$TASK" ] && [ -n "$VERIFY" ] || { grep '^#' "$0" | head -24; exit 1; }
-[ -n "${MODELS[$MKEY]:-}" ] || { echo "未知模型: $MKEY (可选: 16k | 32k | 9b)"; exit 1; }
+[ -n "${MODELS[$MKEY]:-}" ] || { echo "未知模型: $MKEY (可选: 16k | 32k)"; exit 1; }
 MODEL="${MODELS[$MKEY]}"
 
 PROMPT="【角色】你是 pidesk 项目的开发执行者,在 WSL2 的 Linux 环境中工作。
