@@ -149,12 +149,14 @@ ready ── abort 已发 ──▶ stopping ── agent_end ──▶ ready
 - **方案 A(已采纳)**:`@earendil-works/pi-coding-agent` 以 **devDependency + `import type`** 引入上游类型(`RpcCommand/RpcResponse/JsonAgentSessionEvent`),零运行时依赖,pi 升级时 tsc 报错即改动清单(锁版本下安全);实施于 M1 脚手架时登记 DEPENDENCIES.md(dev 类)。详见 decisions.md DR-001。
 - 方案 B(类型 vendoring):不采纳——传递闭包横跨三包约 500~1000 行,人工同步易静默漂移。
 
-## 11. 开放问题(环节一裁决点)
+## 11. 开放问题(已全部裁决,2026-09-10)
 
-1. ~~类型来源~~ → **已裁决 DR-001**(方案 A)。
-2. **prompt 超时**初值 30s 是否合适?(preflight 仅校验排队,一般很快;但模型端点异常时可能久悬)
-3. **Windows 信号兜底**:退出宽限 3s+2s 的参数是否接受?(standalone binary 在 Windows 对 SIGTERM 支持有限,`taskkill /T` 是最终手段)
-4. **compact 超时** 120s 初值是否接受?
+1. 类型来源 → **DR-001**(方案 A:devDependency + import type)。
+2. prompt 超时 30s → **DR-002 采纳**。
+3. Windows 退出兜底(3s→SIGTERM→2s→taskkill /T)→ **DR-002 采纳**。
+4. compact 超时 120s → **DR-002 采纳**。
+
+后续协议层新增裁决一律记 decisions.md,不在本档追加。
 
 ---
 
