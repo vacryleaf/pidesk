@@ -29,7 +29,7 @@ export function ApprovalBar({ summary, onApprove, onReject }: ApprovalBarProps) 
       <button
         type="button"
         onClick={onApprove}
-        className="h-7 shrink-0 cursor-pointer rounded-[8px] bg-[var(--text-0)] px-3 text-[13px] text-[var(--bg-1)]"
+        className="h-7 shrink-0 rounded-[8px] bg-[var(--text-0)] px-3 text-[13px] text-[var(--bg-1)]"
       >
         批准
       </button>
@@ -37,7 +37,7 @@ export function ApprovalBar({ summary, onApprove, onReject }: ApprovalBarProps) 
       <button
         type="button"
         onClick={onReject}
-        className="h-7 shrink-0 cursor-pointer rounded-[8px] bg-[var(--bg-3)] px-3 text-[13px] text-[var(--text-0)]"
+        className="h-7 shrink-0 rounded-[8px] bg-[var(--bg-3)] px-3 text-[13px] text-[var(--text-0)]"
       >
         拒绝
       </button>

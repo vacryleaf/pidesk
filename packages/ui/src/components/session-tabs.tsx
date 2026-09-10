@@ -28,7 +28,7 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
   return (
     <div
       data-testid="session-tabs"
-      className="flex h-[52px] shrink-0 items-center gap-1 overflow-x-auto bg-[var(--bg-1)] px-6"
+      className="titlebar-drag flex h-[52px] shrink-0 items-center gap-1 overflow-x-auto bg-[var(--bg-1)] px-6 pr-[148px]"
     >
       {sessions.map((session) => {
         const active = session.id === activeId;
@@ -38,7 +38,7 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
             data-active={active ? "true" : "false"}
             className={
               // 标签:高 28px、外圆角 10px、水平内边距 8px、图标-文字间距 8px、文本 14px
-              "flex h-[28px] shrink-0 items-center gap-2 rounded-[10px] px-2 text-[14px] leading-5 " +
+              "titlebar-no-drag flex h-[28px] shrink-0 items-center gap-2 rounded-[10px] px-2 text-[14px] leading-5 " +
               (active
                 ? "bg-[var(--surface-active)] text-[var(--text-0)]"
                 : "bg-transparent text-[var(--text-1)]")
@@ -49,7 +49,7 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
               type="button"
               aria-current={active ? "true" : undefined}
               onClick={() => onSelect(session.id)}
-              className="max-w-[160px] cursor-pointer truncate"
+              className="titlebar-no-drag max-w-[160px] truncate"
             >
               {session.label}
             </button>
@@ -58,7 +58,7 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
               type="button"
               aria-label={`关闭 ${session.label}`}
               onClick={() => onClose(session.id)}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-1)]"
+              className="titlebar-no-drag flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-1)]"
             >
               <X size={16} strokeWidth={1.5} />
             </button>
@@ -70,7 +70,7 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
         type="button"
         aria-label="新建会话"
         onClick={onCreate}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-1)]"
+        className="titlebar-no-drag flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-1)]"
       >
         <Plus size={16} strokeWidth={1.5} />
       </button>

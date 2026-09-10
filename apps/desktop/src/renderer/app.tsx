@@ -2,12 +2,14 @@
 // 工作流/运行/配置三个导航项本阶段仍为禁用占位(nav-shell 内),后续里程碑接入。
 import { useEffect, useState } from "react";
 import { NavShell, SessionView, SessionsProvider, SettingsDialog } from "@pidesk/ui";
+import { WindowControls } from "./window-controls";
 
 export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <SessionsProvider>
       <DevDomProbe />
+      <WindowControls />
       <NavShell onOpenSettings={() => setSettingsOpen(true)}>
         <SessionView />
       </NavShell>

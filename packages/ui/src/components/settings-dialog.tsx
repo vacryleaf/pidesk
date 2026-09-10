@@ -171,7 +171,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 type="button"
                 aria-label="关闭"
                 onClick={onClose}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] text-[var(--text-1)]"
+                className="flex h-7 w-7 items-center justify-center rounded-[8px] text-[var(--text-1)]"
               >
                 <X size={16} strokeWidth={1.5} />
               </button>
@@ -179,7 +179,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
 
             {/* 连接类型二选一 */}
             <div className="mb-3 flex items-center gap-4">
-              <label className="flex cursor-pointer items-center gap-1.5 text-[13px] text-[var(--text-0)]">
+              <label className="flex items-center gap-1.5 text-[13px] text-[var(--text-0)]">
                 <input
                   type="radio"
                   name="settings-preset"
@@ -189,7 +189,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 />
                 预置 Ollama
               </label>
-              <label className="flex cursor-pointer items-center gap-1.5 text-[13px] text-[var(--text-0)]">
+              <label className="flex items-center gap-1.5 text-[13px] text-[var(--text-0)]">
                 <input
                   type="radio"
                   name="settings-preset"
@@ -232,7 +232,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 data-testid="settings-apikey-toggle"
                 aria-label={showKey ? "隐藏 API Key" : "显示 API Key"}
                 onClick={() => setShowKey((v) => !v)}
-                className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center text-[var(--text-1)]"
+                className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-[var(--text-1)]"
               >
                 {showKey ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
               </button>
@@ -249,7 +249,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
             />
 
             {/* 保存凭据:默认不勾 */}
-            <label className="mb-4 flex cursor-pointer items-center gap-1.5 text-[13px] text-[var(--text-0)]">
+            <label className="mb-4 flex items-center gap-1.5 text-[13px] text-[var(--text-0)]">
               <input
                 type="checkbox"
                 data-testid="settings-savekey"
@@ -266,7 +266,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 type="button"
                 data-testid="settings-cancel"
                 onClick={onClose}
-                className="h-8 cursor-pointer rounded-[8px] bg-[var(--bg-3)] px-3 text-[14px] text-[var(--text-0)]"
+                className="h-8 rounded-[8px] bg-[var(--bg-3)] px-3 text-[14px] text-[var(--text-0)]"
               >
                 取消
               </button>
@@ -275,7 +275,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 data-testid="settings-save"
                 disabled={saving}
                 onClick={handleSave}
-                className="h-8 cursor-pointer rounded-[8px] bg-[var(--text-0)] px-3 text-[14px] text-[var(--bg-1)] disabled:opacity-50"
+                className="h-8 rounded-[8px] bg-[var(--text-0)] px-3 text-[14px] text-[var(--bg-1)] disabled:opacity-50"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

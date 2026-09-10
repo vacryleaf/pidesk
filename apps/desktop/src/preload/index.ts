@@ -48,6 +48,11 @@ const bridge = {
     ipcRenderer.invoke(INVOKE_CHANNELS.SETTINGS_GET_MODEL_CONFIG, {}),
   settingsSetModelConfig: (config: ProviderConfig) =>
     ipcRenderer.invoke(INVOKE_CHANNELS.SETTINGS_SET_MODEL_CONFIG, config),
+  // ---- 窗口控制(无边框窗口的自定义标题栏)----
+  windowGetState: () => ipcRenderer.invoke(INVOKE_CHANNELS.WINDOW_GET_STATE, {}),
+  windowMinimize: () => ipcRenderer.invoke(INVOKE_CHANNELS.WINDOW_MINIMIZE, {}),
+  windowToggleMaximize: () => ipcRenderer.invoke(INVOKE_CHANNELS.WINDOW_TOGGLE_MAXIMIZE, {}),
+  windowClose: () => ipcRenderer.invoke(INVOKE_CHANNELS.WINDOW_CLOSE, {}),
   // ---- push 事件订阅 ----
   onSessionEvent: (cb: (payload: SessionEventPayload) => void) =>
     subscribe(PUSH_CHANNELS.SESSION_EVENT, cb),

@@ -11,6 +11,15 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 960,
     minHeight: 640,
+    // 无边框窗口(参考 Wegent):macOS 保留红绿灯,其它平台完全无边框、由自定义标题栏控制
+    ...(process.platform === "darwin"
+      ? {
+          frame: true,
+          titleBarStyle: "hiddenInset" as const,
+          trafficLightPosition: { x: 14, y: 12 },
+        }
+      : { frame: false, titleBarStyle: "hidden" as const }),
+    backgroundColor: "#181818",
     // 安全清单:启用上下文隔离、禁用 Node 集成、启用沙箱;webSecurity 保持默认(true)
     webPreferences: {
       contextIsolation: true,

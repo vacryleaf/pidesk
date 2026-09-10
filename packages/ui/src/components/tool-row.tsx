@@ -47,7 +47,7 @@ export function ToolRow({
         type="button"
         data-status="err"
         onClick={() => setOpen(!open)}
-        className="cursor-pointer text-[12px] text-[var(--err)]"
+        className="text-[12px] text-[var(--err)]"
       >
         {open ? "▾" : "▸"} 出错
       </button>

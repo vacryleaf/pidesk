@@ -45,6 +45,25 @@ export function registerIpcHandlers(
     manager.listModels(sessionId),
   );
 
+  // ---- 窗口控制(无边框窗口的自定义标题栏;直接挂到 win)----
+  ipc.handle(INVOKE_CHANNELS.WINDOW_GET_STATE, () => ({ maximized: win.isMaximized() }));
+  ipc.handle(INVOKE_CHANNELS.WINDOW_MINIMIZE, () => {
+    win.minimize();
+    return { maximized: win.isMaximized() };
+  });
+  ipc.handle(INVOKE_CHANNELS.WINDOW_TOGGLE_MAXIMIZE, () => {
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
+    return { maximized: win.isMaximized() };
+  });
+  ipc.handle(INVOKE_CHANNELS.WINDOW_CLOSE, () => {
+    win.close();
+    return { maximized: false };
+  });
+
   // ---- 模型连接配置(T11a 前内存态)----
   handle(ipc, INVOKE_CHANNELS.SETTINGS_GET_MODEL_CONFIG, () => manager.getModelConfig());
   handle(ipc, INVOKE_CHANNELS.SETTINGS_SET_MODEL_CONFIG, (config) =>

@@ -202,19 +202,25 @@ export function SessionView({ actions }: SessionViewProps) {
   // 空态:无任何会话,Wegent DesktopEmptyTaskLauncher 式引导 + 直接可输入的 Composer
   if (sessions.length === 0) {
     return (
-      <section
-        data-testid="session-empty"
-        className="flex min-h-0 min-w-0 flex-1 flex-col px-6 pb-2 pt-8"
-      >
-        <div className="flex min-h-0 flex-1 items-center justify-center pb-8">
-          <h1 className="max-w-full text-center text-[28px] font-normal leading-9 tracking-normal text-[var(--text-0)]">
-            我们该做什么？
-          </h1>
-        </div>
-        <div className="mx-auto w-[min(46rem,calc(100%-2rem))] min-w-0 shrink-0">
-          <Composer sending={false} placeholder="随心输入" onSend={handleEmptySend} onAbort={() => {}} />
-        </div>
-      </section>
+      <div className="flex h-full min-h-0 flex-col">
+        <SessionTabs
+          sessions={[]}
+          activeId={null}
+          onSelect={() => {}}
+          onClose={() => {}}
+          onCreate={handleCreate}
+        />
+        <section data-testid="session-empty" className="flex min-h-0 min-w-0 flex-1 flex-col px-6 pb-2 pt-8">
+          <div className="flex min-h-0 flex-1 items-center justify-center pb-8">
+            <h1 className="max-w-full text-center text-[28px] font-normal leading-9 tracking-normal text-[var(--text-0)]">
+              我们该做什么？
+            </h1>
+          </div>
+          <div className="mx-auto w-[min(46rem,calc(100%-2rem))] min-w-0 shrink-0">
+            <Composer sending={false} placeholder="随心输入" onSend={handleEmptySend} onAbort={() => {}} />
+          </div>
+        </section>
+      </div>
     );
   }
 

@@ -14,6 +14,10 @@ export const INVOKE_CHANNELS = {
   SESSION_LIST_MODELS: "pidesk:session:listModels",
   SETTINGS_GET_MODEL_CONFIG: "pidesk:settings:getModelConfig",
   SETTINGS_SET_MODEL_CONFIG: "pidesk:settings:setModelConfig",
+  WINDOW_GET_STATE: "pidesk:window:getState",
+  WINDOW_MINIMIZE: "pidesk:window:minimize",
+  WINDOW_TOGGLE_MAXIMIZE: "pidesk:window:toggleMaximize",
+  WINDOW_CLOSE: "pidesk:window:close",
 } as const;
 
 // (C) push 通道:主进程单向推送
@@ -79,6 +83,11 @@ export interface InvokeMap {
   // 注:getModelConfig 返回前 apiKey 脱敏由主进程负责
   [INVOKE_CHANNELS.SETTINGS_GET_MODEL_CONFIG]: [unknown, ProviderConfig];
   [INVOKE_CHANNELS.SETTINGS_SET_MODEL_CONFIG]: [ProviderConfig, ProviderConfig];
+  // ---- 窗口控制(无边框窗口的自定义标题栏)----
+  [INVOKE_CHANNELS.WINDOW_GET_STATE]: [Record<string, never>, { maximized: boolean }];
+  [INVOKE_CHANNELS.WINDOW_MINIMIZE]: [Record<string, never>, { maximized: boolean }];
+  [INVOKE_CHANNELS.WINDOW_TOGGLE_MAXIMIZE]: [Record<string, never>, { maximized: boolean }];
+  [INVOKE_CHANNELS.WINDOW_CLOSE]: [Record<string, never>, { maximized: boolean }];
 }
 
 // ---------- (C) push:主进程 → 渲染进程 ----------
@@ -140,6 +149,11 @@ export interface PideskBridge {
   settingsSetModelConfig(
     config: InvokeReq<(typeof INVOKE_CHANNELS)["SETTINGS_SET_MODEL_CONFIG"]>,
   ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["SETTINGS_SET_MODEL_CONFIG"]>>;
+  // ---- 窗口控制 ----
+  windowGetState(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["WINDOW_GET_STATE"]>>;
+  windowMinimize(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["WINDOW_MINIMIZE"]>>;
+  windowToggleMaximize(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["WINDOW_TOGGLE_MAXIMIZE"]>>;
+  windowClose(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["WINDOW_CLOSE"]>>;
   // ---- push 事件订阅:收主进程定向推送,返回取消函数 ----
   onSessionEvent(
     cb: (payload: PushMap[(typeof PUSH_CHANNELS)["SESSION_EVENT"]]) => void,

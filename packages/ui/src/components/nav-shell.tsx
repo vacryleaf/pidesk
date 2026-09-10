@@ -48,10 +48,10 @@ export function NavShell({ children, onOpenSettings }: NavShellProps) {
                 // 激活/启用配置项:text-0;禁用态:text-1 色;无 hover
                 "flex h-[30px] w-full items-center gap-2 rounded-[10px] px-2 text-left text-[14px] leading-5 " +
                 (active
-                  ? "cursor-pointer bg-[var(--surface-active)] text-[var(--text-0)]"
+                  ? "bg-[var(--surface-active)] text-[var(--text-0)]"
                   : settingsEnabled
-                    ? "cursor-pointer bg-transparent text-[var(--text-0)]"
-                    : "cursor-default bg-transparent text-[var(--text-1)]")
+                    ? "bg-transparent text-[var(--text-0)]"
+                    : "bg-transparent text-[var(--text-1)]")
               }
             >
               {/* 图标 16px,继承父级文字色 */}

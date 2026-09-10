@@ -121,7 +121,7 @@ export function ModelMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-7 cursor-pointer items-center gap-1 px-1 text-[13px] text-[var(--text-1)]"
+        className="flex h-7 items-center gap-1 px-1 text-[13px] text-[var(--text-1)]"
       >
         {curProvider && curModelId && curProvider !== "unknown" && curModelId !== "unknown" ? (
           <>
@@ -163,7 +163,7 @@ export function ModelMenu({
                         aria-checked={active}
                         onClick={() => handleSelectModel(m)}
                         className={
-                          "flex w-full cursor-pointer items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
+                          "flex w-full items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
                           (active ? "bg-[var(--bg-3)]" : "")
                         }
                       >
@@ -203,7 +203,7 @@ export function ModelMenu({
                           setOpen(false);
                         }}
                         className={
-                          "flex w-full cursor-pointer items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
+                          "flex w-full items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
                           (active ? "bg-[var(--bg-3)]" : "")
                         }
                       >

@@ -82,7 +82,7 @@ export function Composer({
             type="button"
             aria-label={sending ? "中止" : "发送"}
             onClick={() => (sending ? onAbort() : trySend())}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--text-0)] p-0 text-[var(--bg-1)] disabled:cursor-not-allowed disabled:bg-[var(--text-2)]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--text-0)] p-0 text-[var(--bg-1)] disabled:bg-[var(--text-2)]"
           >
             {/* sending 时切 ⏹(Square),否则 ↑(ArrowUp) */}
             {sending ? (

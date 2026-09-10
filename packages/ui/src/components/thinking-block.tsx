@@ -19,7 +19,7 @@ export function ThinkingBlock({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="cursor-pointer text-[12px] text-[var(--text-2)]"
+        className="text-[12px] text-[var(--text-2)]"
       >
         {open ? "▾" : "▸"} 思考 · {text.length} 字
       </button>
