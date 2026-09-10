@@ -38,34 +38,22 @@ done
 [ -n "${MODELS[$MKEY]:-}" ] || { echo "未知模型: $MKEY (可选: 16k | 32k)"; exit 1; }
 MODEL="${MODELS[$MKEY]}"
 
-PROMPT="【角色】你是 pidesk 项目的开发执行者,在 WSL2 的 Linux 环境中工作。
+PROMPT="【角色】pidesk 项目开发执行者(WSL2 Linux)。
 
-【作业纪律——违反即返工】
-1. 所有文件改动必须通过 write/edit 工具真实落盘;严禁只在回复中粘贴代码。
-2. 只改任务范围内文件;不引入任务未要求的依赖;不动无关格式。
-3. 注释与回复一律中文。
-4. 产出路径必须与任务描述完全一致;禁止自建目录、重命名或移动文件。
-
-【环境约束】
-- Node v24 可直接运行 .ts(type stripping):ESM import 路径必须带 .ts 扩展名(如 import ... from \"./x.ts\")。
-- 包管理器 pnpm;仓库为 pnpm monorepo(apps/ packages/ 结构)。
-- Linux 平台,路径大小写敏感;git 操作由主线程负责,禁止 git commit/push。
-
-【完工标准——硬性】
-1. 完成后必须自行运行验收命令,确认通过:
+【纪律】改动必须 write/edit 真实落盘,严禁只贴代码;只动任务卡清单内文件;不新增依赖;注释与回复中文;路径照卡,禁自建/改名;禁 git 操作。
+【输出】thinking≤200字,只记动作与结论;长命令一律尾部加 2>&1 | tail -20;禁整读大文件(用 grep/head 取片段)。
+【环境】pnpm 必须用 /home/harry/.npm-global/bin/pnpm(PATH 内的 pnpm 可能损坏);pnpm monorepo(apps/ packages/);Node24;Linux;ESM。
+【完工硬标】自行跑验收命令至通过(≤5 轮,失败须自修):
      ${VERIFY}
-2. 验收失败必须自行修复并重跑,直至通过(最多 5 轮);5 轮仍失败则在报告中如实说明已尝试内容与失败原因,不得谎报完成。
-3. 通过后按以下格式报告:
-   改动文件: <路径> — <一句话说明>(逐文件)
-   验收结果: <命令> → 通过,<输出末尾摘要>
-   遗留问题: <无 或 列表>
+通过后报告:改动文件(逐个一句话)/验收输出摘要/遗留问题;5 轮仍败则如实说明,禁谎报。
 
 【任务】
 ${TASK}"
 
 cd "$CWD"
+# -nc/-ns/-np/--no-themes: 关闭 AGENTS.md/skills/提示词模板/主题发现——子线程上下文预算有限,任务卡自包含,无需这些注入
 if [ "$CONT" -eq 1 ]; then
-  exec env PI_CODING_AGENT_DIR="$WORKER_PI_DIR" pi -c -p --model "$MODEL" --thinking medium "$PROMPT"
+  exec env PI_CODING_AGENT_DIR="$WORKER_PI_DIR" pi -c -p --model "$MODEL" --thinking off -nc -ns -np --no-themes "$PROMPT"
 else
-  exec env PI_CODING_AGENT_DIR="$WORKER_PI_DIR" pi -p --model "$MODEL" --thinking medium "$PROMPT"
+  exec env PI_CODING_AGENT_DIR="$WORKER_PI_DIR" pi -p --model "$MODEL" --thinking off -nc -ns -np --no-themes "$PROMPT"
 fi
