@@ -17,6 +17,8 @@
  */
 
 import { spawn as nodeSpawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { delimiter, join } from "node:path";
 import { createJsonlFramer } from "./jsonl-framing.js";
 import { RpcClient, TIMEOUT_MS, type TransportErrorListener, type RpcFrame } from "./rpc-client.js";
 import { buildPiEnv } from "./env.js";
@@ -46,6 +48,17 @@ const STDERR_CAP = 64 * 1024;
 /** 优雅停宽限:stdin.end() 后 3s 发 SIGTERM;再 2s(累计 5s)发 SIGKILL */
 const TERM_GRACE_MS = 3_000;
 const KILL_GRACE_MS = 2_000;
+
+/** 生产默认:在 process.env.PATH 中查找可执行文件(测试注入 findInPath 时不被调用) */
+function defaultFindInPath(name: string): string | null {
+  const paths = (process.env.PATH ?? "").split(delimiter);
+  for (const dir of paths) {
+    if (!dir) continue;
+    const candidate = join(dir, name);
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
 
 /** 注入用子进程最小结构(真实 ChildProcess 的结构子集) */
 export interface ChildProcessLike {
@@ -105,7 +118,7 @@ export interface PiProcessDeps {
   spawnImpl?: SpawnLike;
   /** RPC 客户端工厂,默认内部 new RpcClient */
   rpcFactory?: RpcFactoryLike;
-  /** PATH 查找器(传给 resolvePiBinary),默认未找到 */
+  /** PATH 查找器(传给 resolvePiBinary),默认按 process.env.PATH 查找;测试可注入显式 fake */
   findInPath?: (name: string) => string | null;
   /** 版本预检实现,默认 checkPiVersion */
   versionCheck?: VersionCheckLike;
@@ -150,7 +163,7 @@ export class PiProcess {
       ((command, args, options) =>
         nodeSpawn(command, args, { env: options.env, stdio: options.stdio }) as ChildProcessLike);
     this.rpcFactory = deps.rpcFactory ?? ((sendRaw) => new RpcClient(sendRaw));
-    this.findInPath = deps.findInPath ?? (() => null);
+    this.findInPath = deps.findInPath ?? defaultFindInPath;
     this.versionCheck = deps.versionCheck ?? checkPiVersion;
   }
 
