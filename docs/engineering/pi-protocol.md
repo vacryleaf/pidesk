@@ -144,14 +144,14 @@ ready ── abort 已发 ──▶ stopping ── agent_end ──▶ ready
 - **必须**:`prompt`/`steer`/`abort`/`get_state`/`set_model`/`get_available_models`/`set_thinking_level`/`get_messages`/`get_session_stats`/`new_session`;事件全收(渲染层需要全部流式事件);`extension_ui_request` 实现 `confirm`/`select`/`input`/`notify`(M2 的 mcp-bridge 依赖)。
 - **延后 M2+**:`compact` UI 入口、`fork`/`clone`/`get_tree` 会话树、`export_html`、`bash`、`switch_session`(崩溃恢复路径内部先用)、队列模式设置。
 
-## 10. 类型来源方案(影响依赖台账,待裁决)
+## 10. 类型来源方案(已裁决 DR-001:方案 A)
 
-- **方案 A(推荐)**:`@earendil-works/pi-coding-agent` 以 **devDependency + `import type`** 引入上游类型(`RpcCommand/RpcResponse/JsonAgentSessionEvent`),零运行时依赖,pi 升级时类型即对齐(锁版本下安全);需登记 DEPENDENCIES.md(dev 类)。
-- 方案 B:类型 vendoring(复制进 `packages/shared`,标注来源版本)。无 dev 依赖,但每次升级需手工同步,漂移风险高。
+- **方案 A(已采纳)**:`@earendil-works/pi-coding-agent` 以 **devDependency + `import type`** 引入上游类型(`RpcCommand/RpcResponse/JsonAgentSessionEvent`),零运行时依赖,pi 升级时 tsc 报错即改动清单(锁版本下安全);实施于 M1 脚手架时登记 DEPENDENCIES.md(dev 类)。详见 decisions.md DR-001。
+- 方案 B(类型 vendoring):不采纳——传递闭包横跨三包约 500~1000 行,人工同步易静默漂移。
 
 ## 11. 开放问题(环节一裁决点)
 
-1. **类型来源**:方案 A(devDependency)还是 B(vendoring)?→ 影响 pidesk 首个依赖登记。
+1. ~~类型来源~~ → **已裁决 DR-001**(方案 A)。
 2. **prompt 超时**初值 30s 是否合适?(preflight 仅校验排队,一般很快;但模型端点异常时可能久悬)
 3. **Windows 信号兜底**:退出宽限 3s+2s 的参数是否接受?(standalone binary 在 Windows 对 SIGTERM 支持有限,`taskkill /T` 是最终手段)
 4. **compact 超时** 120s 初值是否接受?
