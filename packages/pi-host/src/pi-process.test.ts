@@ -148,7 +148,6 @@ describe("pi-process 状态机", () => {
     const h = makeHarness({ realClient: true });
     const sp = h.proc.start("/tmp/pidesk-test", "0.85.1");
     await flush(); // 等 spawn 与 stdout/stderr 接线完成
-    console.log("DBG1 states:", JSON.stringify(h.states), "writes:", JSON.stringify(h.child.stdinWrites));
     // 握手期到达的会话事件:先缓冲
     h.child.stdoutData('{"type":"agent_start"}\n');
     h.child.stdoutData('{"type":"message_update"');
@@ -159,8 +158,7 @@ describe("pi-process 状态机", () => {
     h.child.stdoutData(
       '{"type":"response","command":"get_state","id":"req_1","success":true,"data":{"messages":[]}}\n',
     );
-    const snapshot = await Promise.race([sp, new Promise((_, rej) => setTimeout(() => rej(new Error("HANG")), 1500))]);
-    console.log("DBG2 snapshot:", JSON.stringify(snapshot));
+    const snapshot = await sp;
     expect(snapshot).toEqual({ messages: [] });
     expect(h.states).toEqual(["handshaking", "ready"]);
     expect(h.snapshots).toEqual([{ messages: [] }]);

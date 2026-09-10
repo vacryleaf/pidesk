@@ -39,3 +39,8 @@ Thumbs.db
 .DS_Store
 # Coverage reports
 coverage/
+
+# 开发者本地过程件(不入库)
+AGENTS.md
+scripts/dispatch.sh
+docs/engineering/handoff.md
