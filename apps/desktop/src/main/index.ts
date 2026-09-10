@@ -1,5 +1,4 @@
 // 主进程入口(m1-design §7 安全基线)
-import * as fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { registerIpcHandlers } from "./ipc.js";

@@ -7,6 +7,12 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@pidesk/shared": ["./packages/shared/src/index.ts"],
+      "@pidesk/shared/*": ["./packages/shared/src/*.ts"],
+      "@pidesk/pi-host": ["./packages/pi-host/src/index.ts"],
+      "@pidesk/ui": ["./packages/ui/src/index.ts"]
+    }
   }
 }
