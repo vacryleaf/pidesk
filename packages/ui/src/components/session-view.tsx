@@ -292,6 +292,19 @@ export function SessionView({ actions }: SessionViewProps) {
           <div className="grid min-h-0 flex-1 grid-rows-1">
             <MessageList messages={messages} />
           </div>
+          {active.sending &&
+            !(
+              active.messages.at(-1)?.role === "assistant" &&
+              (active.messages.at(-1)?.text ?? "").length > 0
+            ) && (
+              <div
+                data-testid="assistant-thinking"
+                className="mx-auto flex w-full max-w-3xl items-center gap-1.5 px-6 pb-1 text-[12px] text-[var(--text-2)]"
+              >
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[var(--text-2)]" />
+                思考中…
+              </div>
+            )}
           {/* Composer 与消息列共用同一 48rem 内容列,横向 gutter 20px(Wegent §5.1/5.5) */}
           <div className="shrink-0 px-5 pb-3">
             <div className="mx-auto w-full max-w-[48rem]">
