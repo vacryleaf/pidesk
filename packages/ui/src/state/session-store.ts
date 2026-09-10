@@ -95,6 +95,21 @@ export type SessionToolView = ToolView & {
 /** 会话内消息:复用 MessageView,仅把 tools 细化为带 toolCallId 的会话形状 */
 export type SessionMessageView = Omit<MessageView, "tools"> & { tools?: SessionToolView[] };
 
+/** 扩展 UI 请求种类(对齐 pi 的 extension_ui_request:confirm/select/input) */
+export type UiRequestKind = "confirm" | "select" | "input";
+
+/** 扩展 UI 请求视图(结构最小形状):id 用于答复定位,summary 为风险/提示摘要 */
+export type UiRequestView = {
+  /** 上游请求 id */
+  id: string;
+  kind: UiRequestKind;
+  /** 风险摘要 / 提示文本(供审批条与后续呈现) */
+  summary: string;
+};
+
+/** 崩溃态默认错误文案(横幅展示,main 侧可经 message 覆盖) */
+export const CRASHED_ERROR = "pi 进程异常退出";
+
 /** 单个会话状态 */
 export type SessionState = {
   id: string;
@@ -105,9 +120,11 @@ export type SessionState = {
   processState: PideskProcessState;
   /** 队列提示计数(steering/followUp,来自 queue_update) */
   queueCounts: { steering: number; followUp: number };
+  /** 待答复的扩展 UI 请求队列(extension_ui_request,FIFO;呈现留 T11 联调卡) */
+  uiRequests: UiRequestView[];
   /** 会话落盘文件(main 侧注入,本层仅透传占位) */
   sessionFile?: string;
-  /** 错误信息(SESSION_ERROR,或 T10c 崩溃态展示用) */
+  /** 错误信息(SESSION_ERROR,或崩溃态默认文案) */
   error?: string;
   /** 内部簿记:当前流式中的助手消息 id(message_end / agent_settled 后清空) */
   streamingMessageId?: string;
@@ -117,8 +134,10 @@ export type SessionState = {
 export type SessionAction =
   | { type: "SESSION_CREATED"; id: string }
   | { type: "SESSION_REMOVED"; id: string }
-  | { type: "SESSION_SET_STATE"; id: string; processState: PideskProcessState }
+  | { type: "SESSION_SET_STATE"; id: string; processState: PideskProcessState; message?: string }
   | { type: "SESSION_ERROR"; id: string; message: string }
+  | { type: "UI_REQUEST_QUEUED"; id: string; request: UiRequestView }
+  | { type: "UI_REQUEST_RESOLVED"; id: string; requestId: string }
   | { type: "EVENT"; sessionId: string; event: SessionEvent };
 
 /** store 根状态:有序会话集合 */
@@ -135,6 +154,7 @@ function createSession(id: string): SessionState {
     sending: false,
     processState: "spawning",
     queueCounts: { steering: 0, followUp: 0 },
+    uiRequests: [],
   };
 }
 
@@ -173,16 +193,32 @@ export function sessionsReducer(
       // 关闭会话 = 从集合整条移除;pi 进程回收由 main 侧负责(本层纯逻辑不碰桥)
       return { sessions: state.sessions.filter((session) => session.id !== action.id) };
     case "SESSION_SET_STATE":
-      // 含 "crashed" 分支:仅原样记录,崩溃态呈现留 T10c
       return updateSession(state, action.id, (session) => ({
         ...session,
         processState: action.processState,
+        // 崩溃分支:补默认错误文案(action.message 可覆盖),供错误横幅展示
+        ...(action.processState === "crashed"
+          ? { error: action.message ?? CRASHED_ERROR }
+          : {}),
       }));
     case "SESSION_ERROR":
       return updateSession(state, action.id, (session) => ({
         ...session,
         error: action.message,
       }));
+    case "UI_REQUEST_QUEUED":
+      // FIFO 入队:同 id 请求去重,避免重复推送堆叠
+      return updateSession(state, action.id, (session) =>
+        session.uiRequests.some((request) => request.id === action.request.id)
+          ? session
+          : { ...session, uiRequests: [...session.uiRequests, action.request] },
+      );
+    case "UI_REQUEST_RESOLVED":
+      // 出队:按 requestId 移除;未命中保持引用相等
+      return updateSession(state, action.id, (session) => {
+        const next = session.uiRequests.filter((request) => request.id !== action.requestId);
+        return next.length === session.uiRequests.length ? session : { ...session, uiRequests: next };
+      });
     case "EVENT":
       // 未知 sessionId 的事件直接丢弃(进程回收后期事件的兜底)
       return updateSession(state, action.sessionId, (session) =>

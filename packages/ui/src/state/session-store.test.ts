@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applySessionEvent,
+  CRASHED_ERROR,
   initialSessionStore,
   selectSession,
   sessionsReducer,
@@ -183,6 +184,47 @@ describe("错误 / 进程态 / 队列", () => {
     const state = sessionsReducer(create(), { type: "SESSION_SET_STATE", id: "s1", processState: "crashed" });
     expect(pick(state).processState).toBe("crashed");
     expect(pick(sessionsReducer(state, { type: "SESSION_SET_STATE", id: "s1", processState: "ready" })).processState).toBe("ready");
+  });
+
+  it("crashed 分支写入默认错误文案,message 可覆盖", () => {
+    const state = sessionsReducer(create(), { type: "SESSION_SET_STATE", id: "s1", processState: "crashed" });
+    expect(pick(state).processState).toBe("crashed");
+    expect(pick(state).error).toBe(CRASHED_ERROR);
+
+    const custom = sessionsReducer(create(), {
+      type: "SESSION_SET_STATE",
+      id: "s1",
+      processState: "crashed",
+      message: "退出码 137",
+    });
+    expect(pick(custom).error).toBe("退出码 137");
+  });
+
+  it("非崩溃态不覆写 error 字段", () => {
+    const errorState = sessionsReducer(create(), { type: "SESSION_ERROR", id: "s1", message: "boom" });
+    const state = sessionsReducer(errorState, { type: "SESSION_SET_STATE", id: "s1", processState: "ready" });
+    expect(pick(state).error).toBe("boom");
+  });
+
+  it("UI_REQUEST_QUEUED 按 FIFO 入队,同 id 去重", () => {
+    let state = create();
+    expect(pick(state).uiRequests).toEqual([]);
+    state = sessionsReducer(state, { type: "UI_REQUEST_QUEUED", id: "s1", request: { id: "r1", kind: "confirm", summary: "执行命令" } });
+    state = sessionsReducer(state, { type: "UI_REQUEST_QUEUED", id: "s1", request: { id: "r2", kind: "input", summary: "补充说明" } });
+    expect(pick(state).uiRequests.map((r) => r.id)).toEqual(["r1", "r2"]);
+    // 同 id 重复入队不改变状态引用
+    expect(
+      sessionsReducer(state, { type: "UI_REQUEST_QUEUED", id: "s1", request: { id: "r1", kind: "confirm", summary: "执行命令" } }),
+    ).toBe(state);
+  });
+
+  it("UI_REQUEST_RESOLVED 按 requestId 出队;未命中不改状态", () => {
+    let state = create();
+    state = sessionsReducer(state, { type: "UI_REQUEST_QUEUED", id: "s1", request: { id: "r1", kind: "confirm", summary: "a" } });
+    state = sessionsReducer(state, { type: "UI_REQUEST_QUEUED", id: "s1", request: { id: "r2", kind: "select", summary: "b" } });
+    state = sessionsReducer(state, { type: "UI_REQUEST_RESOLVED", id: "s1", requestId: "r1" });
+    expect(pick(state).uiRequests.map((r) => r.id)).toEqual(["r2"]);
+    expect(sessionsReducer(state, { type: "UI_REQUEST_RESOLVED", id: "s1", requestId: "ghost" })).toBe(state);
   });
 
   it("queue_update 更新 steering/followUp 计数", () => {
