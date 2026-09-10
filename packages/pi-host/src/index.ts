@@ -7,3 +7,15 @@ export type { TransportErrorListener } from "./rpc-client.js";
 // 二进制解析 + 版本预检(T5b)
 export { resolvePiBinary, checkPiVersion } from "./version.js";
 export type { VersionCheckResult, VersionWarnListener } from "./version.js";
+// 单 pi 进程生命周期状态机(T6)
+export { PiProcess } from "./pi-process.js";
+export type {
+  PiProcessState,
+  PiProcessDeps,
+  PiProcessExitInfo,
+  ChildProcessLike,
+  SpawnLike,
+  RpcClientLike,
+  RpcFactoryLike,
+  VersionCheckLike,
+} from "./pi-process.js";
