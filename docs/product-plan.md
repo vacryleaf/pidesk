@@ -30,6 +30,7 @@
 | T6 | UI 基建与设计流程 | 组件库 **shadcn/ui**（Tailwind + Radix）+ react-markdown + React Flow + lucide；设计流程由 **frontend-design** skill（Anthropic 官方，agent/skill/frontend-design/，junction 接入）驱动，产物为 docs/ui-prototype-plan.md（令牌系统 + 反模板审查 + 分屏规格）；暗色石墨主题、蓝色仅限焦点语义、密度对齐 Wegent DESIGN.md。背景：vtools egui 手绘 UI 美观度问题，本项目 UI 禁止脱离令牌系统即兴绘制 | 2026-09-10 |
 | T7 | 预置 provider 清单 | 预置 **本地 Ollama**（`http://127.0.0.1:11434/v1`，OpenAI 兼容端点）与**通用自定义 provider**（自定义 baseUrl，覆盖中转站场景，对齐 F8）；**不内置任何云端 provider 凭据**。背景：开发机已有 Ollama 部署（qwen3.8 27B/9B，2026-09-10 实测 52/121 tok/s），M1 验收零成本跑通 | 2026-09-10 |
 | T8 | 代理集成时机 | clash 代理集成延后至 **M2**；M1 仅保留 `HTTP_PROXY`/`HTTPS_PROXY` env 注入位（§6.1 PiProcess env 装配不变），不做 clash 交互。开发链路不依赖代理：WSL→GitHub 版本库同步走 SSH over 443（ssh.github.com，HTTPS 主站按 SNI 阻断不受影响） | 2026-09-10 |
+| T9 | 产品定名与仓库 | **定名 `pidesk`**（占位转正，不再更名）；仓库 `github.com/vacryleaf/pidesk`。包名 scope `@pidesk/*`，userData 目录名 `pidesk`，协议/IPC 字段前缀 `pidesk:` | 2026-09-10 |
 
 ---
 
@@ -261,7 +262,7 @@ userData/
 
 ## 13. 待决问题（进入 M1 前需确认）
 
-1. 产品定名（现占位 `pidesk`）与仓库位置（现为 `workspace/pidesk`）。
+1. ~~产品定名（现占位 `pidesk`）与仓库位置。~~ → **已裁决 T9**（2026-09-10：定名 pidesk，仓库 github.com/vacryleaf/pidesk）
 2. ~~默认 bundled 模型档位与预置 provider 清单（涉及中转 baseUrl 预设是否内置）。~~ → **已裁决 T7**（2026-09-10）
 3. ~~M1 是否顺带把 clash 代理集成纳入（vtools 有现成经验；建议 M2 再议）。~~ → **已裁决 T8**（2026-09-10：延后 M2）
 4. 是否接受 M1-M3 macOS 产物 unsigned。
