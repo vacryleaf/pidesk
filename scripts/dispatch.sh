@@ -6,7 +6,7 @@
 #   scripts/dispatch.sh -t "<任务描述>" -v "<验收命令>" [-d <工作目录>] [-c] [-m <模型>]
 #     -t  任务描述(必填,自包含:目标/涉及文件路径/约束,关键现状摘要内联,减少子线程探索性读取)
 #     -v  验收命令(必填,子线程必须自行跑到通过为止,如 "pnpm -r build && pnpm -r test")
-#     -d  工作目录(默认 /root/pidesk;子线程会话按 cwd 归档)
+#     -d  工作目录(默认仓库根,由脚本位置自动定位;子线程会话按 cwd 归档)
 #     -c  返工模式:续接该工作目录最近的子线程会话(需附具体问题清单与原始报错)
 #     -m  模型覆盖(默认 16k):16k | 32k
 #         16k = qwen3.8:q3xl-16k(27B,默认;任务卡必须按 16k 上下文预算拆分)
@@ -18,11 +18,12 @@
 
 set -euo pipefail
 
-WORKER_PI_DIR="/root/.pi-worker"
+WORKER_PI_DIR="/home/harry/.pi-worker"
 MODEL_DEFAULT="ollama/qwen3.8:q3xl-16k"
 declare -A MODELS=( [16k]="$MODEL_DEFAULT" [32k]="ollama/qwen3.8:q3xl-32k" )
 
-TASK="" VERIFY="" CWD="/root/pidesk" CONT=0 MKEY="16k"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TASK="" VERIFY="" CWD="$REPO_ROOT" CONT=0 MKEY="16k"
 while getopts "t:v:d:cm:" opt; do
   case $opt in
     t) TASK="$OPTARG" ;;

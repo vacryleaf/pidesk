@@ -19,7 +19,7 @@
   ```
 
   脚本内置:作业纪律(工具落盘/范围约束)、环境约束(Node24/ESM 扩展名/pnpm/WSL)、完工标准(自行跑验收命令直到通过才许报告完成)。子线程默认开思考(medium)。
-  - 子线程配置/会话隔离于 `/root/.pi-worker/`,与主线程互不可见(同时是 pidesk 产品隔离机制的演练);会话记录可供主线程审查工具调用过程;同一工作目录串行派发,避免 --continue 会话归属混淆。
+  - 子线程配置/会话隔离于 `/home/harry/.pi-worker/`,与主线程互不可见(同时是 pidesk 产品隔离机制的演练);会话记录可供主线程审查工具调用过程;同一工作目录串行派发,避免 --continue 会话归属混淆。
   - 子线程**不做 git 提交**,只改工作区;提交由主线程验收后统一执行。
 
 ## 任务拆分原则(主线程)
@@ -50,4 +50,4 @@
 - 流程权威:`docs/engineering/dev-process.md`(阶段/任务卡生命周期/测试分层 L1-L4/三确认环节/依赖报备制);裁决:product-plan §2(T1-T9)+ dev-process 文末(P1-P4)。
 - 权威规划:`docs/product-plan.md`(裁决 T1-T9);UI 规格:`docs/ui-prototype-plan.md`。
 - 技术栈:TypeScript + Electron + React(pnpm monorepo);pi 运行时方案 B(standalone binary 锁版本)。
-- 开发机:WSL 里 pi 0.85.1(`/usr/local/bin/pi`);Ollama 在 `localhost:11434`(Windows 宿主,镜像网络);git 推送走 SSH over 443。
+- 开发机:WSL(Ubuntu,默认用户 harry);仓库 `/home/harry/pidesk`(Windows 经 `\\wsl.localhost\Ubuntu\home\harry\pidesk` 访问);pi 0.85.1(`/usr/local/bin/pi`);Ollama 在 `localhost:11434`(Windows 宿主,镜像网络);git 推送以 harry 身份走 SSH over 443。
