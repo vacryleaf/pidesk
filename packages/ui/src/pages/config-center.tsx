@@ -1,7 +1,7 @@
 /**
  * ConfigCenter(M2)—— 整页配置中心第一版:左侧树形导航 + 模型/凭据管理 + 代理设置。
  * - 数据经 window.pidesk.config* 真实 IPC;ui 不依赖 @pidesk/shared,按结构最小声明桥类型。
- * - Skills / MCP / 扩展为占位空态(M2 后续卡片接入)。
+ * - Skills 为占位空态(M2 后续卡片接入);MCP 已接入配置 IPC。
  * - 全部 Wegent 令牌 CSS 变量;无 hover / cursor(项目全局 cursor default)。
  */
 import { useCallback, useEffect, useState } from "react";
@@ -32,6 +32,17 @@ export type SkillInfo = {
   hasSkillFile: boolean;
 };
 
+export type McpServerConfig = {
+  id: string;
+  name: string;
+  transport: "stdio" | "sse";
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  enabled: boolean;
+};
+
 export type AppPreferences = {
   proxy: { http?: string; https?: string };
   defaultModel?: { provider: string; modelId: string; thinkingLevel?: string };
@@ -53,6 +64,9 @@ export type ConfigBridge = {
   configSkillsImport?(): Promise<{ cancelled: boolean; skills: SkillInfo[] }>;
   configSkillsSetEnabled?(id: string, enabled: boolean): Promise<SkillInfo[]>;
   configSkillsRemove?(id: string): Promise<SkillInfo[]>;
+  configMcpList?(): Promise<McpServerConfig[]>;
+  configMcpUpsert?(server: McpServerConfig): Promise<McpServerConfig[]>;
+  configMcpRemove?(id: string): Promise<McpServerConfig[]>;
 };
 
 function resolveBridge(explicit?: ConfigBridge): ConfigBridge | undefined {
@@ -134,6 +148,63 @@ function draftFromProfile(profile: ProviderProfile & { hasKey: boolean }): Provi
     saveKey: profile.saveKey,
     apiKey: "",
   };
+}
+
+/** MCP 表单草稿:args / env 用「每行一条」的 textarea 文本表达 */
+type McpDraft = {
+  id: string;
+  name: string;
+  transport: "stdio" | "sse";
+  command: string;
+  argsText: string;
+  envText: string;
+  url: string;
+  enabled: boolean;
+};
+
+const EMPTY_MCP_DRAFT: McpDraft = {
+  id: "",
+  name: "",
+  transport: "stdio",
+  command: "",
+  argsText: "",
+  envText: "",
+  url: "",
+  enabled: true,
+};
+
+function mcpDraftFromServer(server: McpServerConfig): McpDraft {
+  return {
+    id: server.id,
+    name: server.name,
+    transport: server.transport,
+    command: server.command ?? "",
+    argsText: (server.args ?? []).join("\n"),
+    envText: Object.entries(server.env ?? {})
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n"),
+    url: server.url ?? "",
+    enabled: server.enabled,
+  };
+}
+
+/** argsText → string[]:空行忽略 */
+function parseLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+/** envText → Record<string,string>:每行 KEY=VALUE,非法行忽略 */
+function parseEnv(text: string): Record<string, string> | undefined {
+  const env: Record<string, string> = {};
+  for (const line of parseLines(text)) {
+    const idx = line.indexOf("=");
+    if (idx <= 0) continue;
+    env[line.slice(0, idx).trim()] = line.slice(idx + 1);
+  }
+  return Object.keys(env).length > 0 ? env : undefined;
 }
 
 // ---------- 输入控件(统一样式,无 hover) ----------
@@ -236,6 +307,81 @@ export function ConfigCenter({ onClose, bridge }: ConfigCenterProps) {
     if (confirmFn && !confirmFn(`确认删除 Skill「${id}」?`)) return;
     try {
       setSkills(await resolved.configSkillsRemove(id));
+    } catch (err) {
+      push(`删除失败:${errText(err)}`);
+    }
+  };
+
+  // ---------- MCP Server ----------
+  const [mcpServers, setMcpServers] = useState<McpServerConfig[] | null>(null);
+  // 编辑中的 MCP server:id 为空表示新增;null 表示关闭表单
+  const [mcpDraft, setMcpDraft] = useState<McpDraft | null>(null);
+
+  const loadMcp = useCallback(async () => {
+    if (typeof resolved?.configMcpList !== "function") return;
+    try {
+      setMcpServers(await resolved.configMcpList());
+    } catch (err) {
+      push(`加载 MCP Server 失败:${errText(err)}`);
+    }
+  }, [resolved, push]);
+
+  useEffect(() => {
+    void loadMcp();
+  }, [loadMcp]);
+
+  const saveMcp = () => {
+    if (typeof resolved?.configMcpUpsert !== "function" || !mcpDraft) return;
+    const id = mcpDraft.id.trim();
+    if (!id) {
+      push("id 不能为空");
+      return;
+    }
+    if (!mcpDraft.name.trim()) {
+      push("名称不能为空");
+      return;
+    }
+    if (mcpDraft.transport === "stdio" && !mcpDraft.command.trim()) {
+      push("stdio 传输需要填写 command");
+      return;
+    }
+    if (mcpDraft.transport === "sse" && !mcpDraft.url.trim()) {
+      push("sse 传输需要填写 url");
+      return;
+    }
+    const server: McpServerConfig = {
+      id,
+      name: mcpDraft.name.trim(),
+      transport: mcpDraft.transport,
+      enabled: mcpDraft.enabled,
+      ...(mcpDraft.transport === "stdio"
+        ? {
+            command: mcpDraft.command.trim(),
+            args: parseLines(mcpDraft.argsText).length > 0 ? parseLines(mcpDraft.argsText) : undefined,
+            env: parseEnv(mcpDraft.envText),
+          }
+        : { url: mcpDraft.url.trim() }),
+    };
+    void resolved
+      .configMcpUpsert(server)
+      .then((list) => {
+        setMcpServers(list);
+        setMcpDraft(null);
+        push("已保存");
+      })
+      .catch((err: unknown) => push(`保存失败:${errText(err)}`));
+  };
+
+  const removeMcp = async (id: string) => {
+    if (typeof resolved?.configMcpRemove !== "function") return;
+    const confirmFn =
+      typeof window !== "undefined" && typeof window.confirm === "function"
+        ? window.confirm
+        : null;
+    if (confirmFn && !confirmFn(`确认删除 MCP Server「${id}」?`)) return;
+    try {
+      setMcpServers(await resolved.configMcpRemove(id));
+      push("已删除");
     } catch (err) {
       push(`删除失败:${errText(err)}`);
     }
@@ -650,11 +796,179 @@ export function ConfigCenter({ onClose, bridge }: ConfigCenterProps) {
           </section>
         )}
 
-        {(section === "mcp" || section === "extensions") && (
+        {section === "mcp" && (
+          <section className="flex flex-col gap-3" data-testid="config-mcp">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[16px] font-semibold">MCP</h2>
+              <button
+                type="button"
+                data-testid="config-mcp-add"
+                className={btnNeutral}
+                onClick={() => setMcpDraft({ ...EMPTY_MCP_DRAFT })}
+              >
+                新增 MCP Server
+              </button>
+            </div>
+
+            {mcpDraft && (
+              <div className="flex flex-col gap-3 rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-2)] p-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="id">
+                    <input
+                      className={inputCls}
+                      value={mcpDraft.id}
+                      onChange={(e) => setMcpDraft({ ...mcpDraft, id: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="名称">
+                    <input
+                      className={inputCls}
+                      value={mcpDraft.name}
+                      onChange={(e) => setMcpDraft({ ...mcpDraft, name: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="传输类型">
+                    <select
+                      className={inputCls}
+                      value={mcpDraft.transport}
+                      onChange={(e) =>
+                        setMcpDraft({
+                          ...mcpDraft,
+                          transport: e.target.value as McpDraft["transport"],
+                        })
+                      }
+                    >
+                      <option value="stdio">stdio</option>
+                      <option value="sse">sse</option>
+                    </select>
+                  </Field>
+                  {mcpDraft.transport === "stdio" ? (
+                    <Field label="command">
+                      <input
+                        className={inputCls}
+                        value={mcpDraft.command}
+                        onChange={(e) => setMcpDraft({ ...mcpDraft, command: e.target.value })}
+                      />
+                    </Field>
+                  ) : (
+                    <Field label="url">
+                      <input
+                        className={inputCls}
+                        value={mcpDraft.url}
+                        onChange={(e) => setMcpDraft({ ...mcpDraft, url: e.target.value })}
+                      />
+                    </Field>
+                  )}
+                </div>
+                {mcpDraft.transport === "stdio" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="args(每行一个)">
+                      <textarea
+                        rows={3}
+                        className={inputCls + " h-auto py-1.5"}
+                        value={mcpDraft.argsText}
+                        onChange={(e) => setMcpDraft({ ...mcpDraft, argsText: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="env(每行 KEY=VALUE)">
+                      <textarea
+                        rows={3}
+                        className={inputCls + " h-auto py-1.5"}
+                        value={mcpDraft.envText}
+                        onChange={(e) => setMcpDraft({ ...mcpDraft, envText: e.target.value })}
+                      />
+                    </Field>
+                  </div>
+                )}
+                <label className="flex items-center gap-2 text-[13px] text-[var(--text-1)]">
+                  <input
+                    type="checkbox"
+                    checked={mcpDraft.enabled}
+                    onChange={(e) => setMcpDraft({ ...mcpDraft, enabled: e.target.checked })}
+                  />
+                  启用
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    data-testid="config-mcp-save"
+                    className={btnNeutral}
+                    onClick={saveMcp}
+                  >
+                    保存
+                  </button>
+                  <button type="button" className={btnGhost} onClick={() => setMcpDraft(null)}>
+                    取消
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {mcpServers && mcpServers.length > 0 ? (
+              mcpServers.map((server) => (
+                <div
+                  key={server.id}
+                  data-testid={`config-mcp-${server.id}`}
+                  className="flex flex-col gap-1.5 rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-2)] p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-medium">{server.name}</span>
+                    <span className="text-[12px] text-[var(--text-1)]">{server.id}</span>
+                    <span className="text-[12px] text-[var(--text-1)]">{server.transport}</span>
+                    <span
+                      className={
+                        server.enabled
+                          ? "text-[12px] text-[var(--text-0)]"
+                          : "text-[12px] text-[var(--text-2)]"
+                      }
+                    >
+                      {server.enabled ? "启用" : "停用"}
+                    </span>
+                  </div>
+                  {(server.transport === "stdio" ? server.command : server.url) && (
+                    <p className="text-[12px] text-[var(--text-1)]">
+                      {server.transport === "stdio"
+                        ? [server.command, ...(server.args ?? [])].join(" ")
+                        : server.url}
+                    </p>
+                  )}
+                  <div className="mt-1 flex gap-2">
+                    <button
+                      type="button"
+                      className={btnGhost}
+                      onClick={() => setMcpDraft(mcpDraftFromServer(server))}
+                    >
+                      编辑
+                    </button>
+                    <button
+                      type="button"
+                      className={btnGhost}
+                      onClick={() => void removeMcp(server.id)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-2)] p-6 text-center">
+                <p className="text-[13px] text-[var(--text-1)]">还没有 MCP Server</p>
+                <button
+                  type="button"
+                  data-testid="config-mcp-add-empty"
+                  className={btnNeutral + " mt-3"}
+                  onClick={() => setMcpDraft({ ...EMPTY_MCP_DRAFT })}
+                >
+                  新增 MCP Server
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {section === "extensions" && (
           <section className="flex flex-col gap-1">
-            <h2 className="text-[16px] font-semibold">
-              {section === "mcp" ? "MCP" : "扩展"}
-            </h2>
+            <h2 className="text-[16px] font-semibold">扩展</h2>
             <p className="text-[13px] text-[var(--text-1)]">M2 后续卡片接入</p>
           </section>
         )}
