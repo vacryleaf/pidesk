@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { resolveDataDir } from "@pidesk/shared";
 import { registerIpcHandlers } from "./ipc.js";
+import { bootstrapExtensions } from "./extensions.js";
 import { PiHostManager } from "./pi-host-manager.js";
 
 // 创建主窗口:默认尺寸 1280×800,最小 960×640
@@ -89,6 +90,8 @@ app.whenReady().then(() => {
   const win = createWindow();
   // 对齐 m1-design §5:打包态 userData,开发态 .pidesk-dev
   const dataDir = app.isPackaged ? app.getPath("userData") : resolveDataDir(process.env);
+  // M2 flow-bridge:pi 会话启动前写入扩展(幂等)
+  bootstrapExtensions(dataDir);
   const manager = new PiHostManager(dataDir);
   registerIpcHandlers(ipcMain, manager, win, dataDir);
 });
