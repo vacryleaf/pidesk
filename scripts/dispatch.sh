@@ -20,7 +20,7 @@ set -euo pipefail
 
 WORKER_PI_DIR="/home/harry/.pi-worker"
 MODEL_DEFAULT="ollama/qwen3.8:q3xl-16k"
-declare -A MODELS=( [16k]="$MODEL_DEFAULT" [32k]="ollama/qwen3.8:q3xl-32k" )
+declare -A MODELS=( [16k]="$MODEL_DEFAULT" [32k]="ollama/qwen3.8:q3xl-32k" [glm]="hanhe/glm-5.3-flash" )
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TASK="" VERIFY="" CWD="$REPO_ROOT" CONT=0 MKEY="16k"

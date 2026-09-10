@@ -54,7 +54,7 @@ const EMPTY_BUF: Buffer<ArrayBuffer> = Buffer.alloc(0);
  * @returns { push(chunk), end() } 推入数据 / 结束流
  */
 export function createJsonlFramer(onLine: (line: string) => void) {
-  let pending: Buffer; // 尚未组成完整字符的尾部字节
+  let pending: Buffer = EMPTY_BUF; // 尚未组成完整字符的尾部字节
   let line = ""; // 当前行累积
 
   /** 从 line 中切出所有完整行并回调;流结束时若 emitLast 则发出残缺尾行 */
