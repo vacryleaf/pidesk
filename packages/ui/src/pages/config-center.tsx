@@ -24,6 +24,14 @@ export type ProviderProfile = {
   enabled: boolean;
 };
 
+export type SkillInfo = {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  hasSkillFile: boolean;
+};
+
 export type AppPreferences = {
   proxy: { http?: string; https?: string };
   defaultModel?: { provider: string; modelId: string; thinkingLevel?: string };
@@ -41,6 +49,10 @@ export type ConfigBridge = {
   configProviderUpsert(profile: ProviderProfile, apiKey?: string): Promise<ConfigSnapshot>;
   configProviderRemove(id: string): Promise<ConfigSnapshot>;
   configDefaultModelSet(defaultModel?: AppPreferences["defaultModel"]): Promise<ConfigSnapshot>;
+  configSkillsList?(): Promise<SkillInfo[]>;
+  configSkillsImport?(): Promise<{ cancelled: boolean; skills: SkillInfo[] }>;
+  configSkillsSetEnabled?(id: string, enabled: boolean): Promise<SkillInfo[]>;
+  configSkillsRemove?(id: string): Promise<SkillInfo[]>;
 };
 
 function resolveBridge(explicit?: ConfigBridge): ConfigBridge | undefined {
@@ -178,6 +190,56 @@ export function ConfigCenter({ onClose, bridge }: ConfigCenterProps) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const [skills, setSkills] = useState<SkillInfo[] | null>(null);
+
+  const loadSkills = useCallback(async () => {
+    if (typeof resolved?.configSkillsList !== "function") return;
+    try {
+      setSkills(await resolved.configSkillsList());
+    } catch (err) {
+      push(`加载 Skills 失败:${errText(err)}`);
+    }
+  }, [resolved, push]);
+
+  useEffect(() => {
+    void loadSkills();
+  }, [loadSkills]);
+
+  const importSkills = async () => {
+    if (typeof resolved?.configSkillsImport !== "function") return;
+    try {
+      const res = await resolved.configSkillsImport();
+      if (res.cancelled) return;
+      setSkills(res.skills);
+      push("已导入");
+    } catch (err) {
+      push(`导入失败:${errText(err)}`);
+    }
+  };
+
+  const toggleSkill = async (id: string, enabled: boolean) => {
+    if (typeof resolved?.configSkillsSetEnabled !== "function") return;
+    try {
+      setSkills(await resolved.configSkillsSetEnabled(id, enabled));
+    } catch (err) {
+      push(`操作失败:${errText(err)}`);
+    }
+  };
+
+  const removeSkill = async (id: string) => {
+    if (typeof resolved?.configSkillsRemove !== "function") return;
+    const confirmFn =
+      typeof window !== "undefined" && typeof window.confirm === "function"
+        ? window.confirm
+        : null;
+    if (confirmFn && !confirmFn(`确认删除 Skill「${id}」?`)) return;
+    try {
+      setSkills(await resolved.configSkillsRemove(id));
+    } catch (err) {
+      push(`删除失败:${errText(err)}`);
+    }
+  };
 
   const run = useCallback(
     async (action: () => Promise<ConfigSnapshot>, okText: string) => {
@@ -514,10 +576,84 @@ export function ConfigCenter({ onClose, bridge }: ConfigCenterProps) {
           </section>
         )}
 
-        {(section === "skills" || section === "mcp" || section === "extensions") && (
+        {section === "skills" && (
+          <section className="flex flex-col gap-3" data-testid="config-skills">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[16px] font-semibold">Skills</h2>
+              <button
+                type="button"
+                data-testid="config-skills-import"
+                className={btnNeutral}
+                onClick={() => void importSkills()}
+              >
+                导入 Skills 目录
+              </button>
+            </div>
+
+            {skills && skills.length > 0 ? (
+              skills.map((skill) => (
+                <div
+                  key={skill.id}
+                  data-testid={`config-skill-${skill.id}`}
+                  className="flex flex-col gap-1.5 rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-2)] p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-medium">{skill.name}</span>
+                    <span className="text-[12px] text-[var(--text-1)]">{skill.id}</span>
+                    <span
+                      className={
+                        skill.enabled
+                          ? "text-[12px] text-[var(--text-0)]"
+                          : "text-[12px] text-[var(--text-2)]"
+                      }
+                    >
+                      {skill.enabled ? "启用" : "停用"}
+                    </span>
+                    {!skill.hasSkillFile && (
+                      <span className="text-[12px] text-[var(--err)]">缺少 SKILL.md</span>
+                    )}
+                  </div>
+                  {skill.description && (
+                    <p className="text-[12px] text-[var(--text-1)]">{skill.description}</p>
+                  )}
+                  <div className="mt-1 flex gap-2">
+                    <button
+                      type="button"
+                      className={btnGhost}
+                      onClick={() => void toggleSkill(skill.id, !skill.enabled)}
+                    >
+                      {skill.enabled ? "停用" : "启用"}
+                    </button>
+                    <button
+                      type="button"
+                      className={btnGhost}
+                      onClick={() => void removeSkill(skill.id)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-2)] p-6 text-center">
+                <p className="text-[13px] text-[var(--text-1)]">还没有 Skills</p>
+                <button
+                  type="button"
+                  data-testid="config-skills-import-empty"
+                  className={btnNeutral + " mt-3"}
+                  onClick={() => void importSkills()}
+                >
+                  导入 Skills 目录
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {(section === "mcp" || section === "extensions") && (
           <section className="flex flex-col gap-1">
             <h2 className="text-[16px] font-semibold">
-              {section === "skills" ? "Skills" : section === "mcp" ? "MCP" : "扩展"}
+              {section === "mcp" ? "MCP" : "扩展"}
             </h2>
             <p className="text-[13px] text-[var(--text-1)]">M2 后续卡片接入</p>
           </section>
