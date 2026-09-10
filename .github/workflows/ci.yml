@@ -3,9 +3,8 @@
 # 无 secrets 依赖;产物矩阵 P3:Windows NSIS 优先,Linux 只做本地覆盖不出包,macOS 延后 M5
 name: CI
 
+# 开发期暂停自动 CI;全部任务收口后再恢复 push 触发(可先手动 workflow_dispatch)。
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # 最小权限:仅读取仓库内容,不需要任何 secret
