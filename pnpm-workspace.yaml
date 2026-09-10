@@ -5,6 +5,7 @@ allowBuilds:
   esbuild: true
   protobufjs: false
   '@google/genai': false
+  electron-winstaller: false
 minimumReleaseAgeExclude:
   - '@types/react-dom@19.3.0'
   - '@types/react@19.3.0'
