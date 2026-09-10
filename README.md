@@ -16,6 +16,8 @@
 
 - 权威规划文档：[docs/product-plan.md](docs/product-plan.md)
   - 含技术裁决（语言选型、pi 运行时分发方案、M3 线性化）、模块详设、里程碑、风险登记。
+- UI 原型规划：[docs/ui-prototype-plan.md](docs/ui-prototype-plan.md)
+  - 由 **frontend-design** skill（Anthropic 官方，已安装于 `agent/skill/frontend-design/` 并 junction 接入 Claude Code/Codex）驱动的两遍式设计规划：令牌系统 → 反模板审查 → shadcn/ui 组件基建 → 分屏原型规格（吸取 vtools egui 手绘 UI 美观度教训，UI 一律受令牌系统约束）。
 - 关键裁决速查：
   - 技术栈：**TypeScript + Electron + React**（pnpm monorepo）——评估结论，详见 product-plan.md §2/§3；
   - pi 运行时：**方案 B 内置分发**——按平台打包官方 standalone binary（六平台矩阵均有官方产物），锁版本 + sha256；

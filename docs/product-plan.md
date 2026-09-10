@@ -27,6 +27,7 @@
 | T3 | pi 运行时分发 | **方案 B：内置分发**——按平台打包 pi 官方 standalone binary，锁版本 + sha256 清单，PATH 检测仅作开发模式回退 | 2026-09-10 |
 | T4 | M3 工作流形态 | **单链路线**：Start → [Data\|Script\|PiAgent\|Transform]* → Output 顺序执行；无条件/并行/循环；编辑用有序节点列表 + 表单，**无画布**（画布属 M4） | 2026-09-10 |
 | T5 | 应用内产品名 | `pidesk` 为占位名，待定 | 2026-09-10 |
+| T6 | UI 基建与设计流程 | 组件库 **shadcn/ui**（Tailwind + Radix）+ react-markdown + React Flow + lucide；设计流程由 **frontend-design** skill（Anthropic 官方，agent/skill/frontend-design/，junction 接入）驱动，产物为 docs/ui-prototype-plan.md（令牌系统 + 反模板审查 + 分屏规格）；暗色石墨主题、蓝色仅限焦点语义、密度对齐 Wegent DESIGN.md。背景：vtools egui 手绘 UI 美观度问题，本项目 UI 禁止脱离令牌系统即兴绘制 | 2026-09-10 |
 
 ---
 
@@ -178,6 +179,8 @@ pidesk/
 - **成本可视**：pi `get_session_stats` 提供 tokens/cost，Run 汇总展示。
 
 ### 6.5 UI（packages/ui）
+
+> 视觉与交互规格统一以 **docs/ui-prototype-plan.md** 为准（T6：shadcn/ui + 令牌系统，frontend-design skill 驱动），下表仅为分屏与里程碑索引。
 
 | 面板 | M | 内容 |
 |------|---|------|
