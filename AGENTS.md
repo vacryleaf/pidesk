@@ -38,8 +38,15 @@
 3. **通过** → 主线程统一提交(Conventional Commits,中文描述)并推送。
 4. 红线:编译必须过;不引入规划外依赖;UI 改动必须符合 `docs/ui-prototype-plan.md` 令牌系统;涉及 pi 协议(RPC/扩展)必须对照上游 docs 核实。
 
+## 依赖纪律(报备制)
+
+- 仅在必须时引入第三方依赖;**无需用户批准,但必须告知**。
+- 程序:主线程评估 → 登记 `docs/DEPENDENCIES.md`(包/版本/用途/License/日期)→ 在相关验收汇报中向用户列明。
+- 子线程禁止自行引入依赖;派发卡写明允许使用的依赖范围。
+
 ## 项目要点速查
 
-- 权威规划:`docs/product-plan.md`(裁决 T1-T8);UI 规格:`docs/ui-prototype-plan.md`。
+- 流程权威:`docs/engineering/dev-process.md`(阶段/任务卡生命周期/测试分层 L1-L4/三确认环节/依赖报备制);裁决:product-plan §2(T1-T9)+ dev-process 文末(P1-P4)。
+- 权威规划:`docs/product-plan.md`(裁决 T1-T9);UI 规格:`docs/ui-prototype-plan.md`。
 - 技术栈:TypeScript + Electron + React(pnpm monorepo);pi 运行时方案 B(standalone binary 锁版本)。
 - 开发机:WSL 里 pi 0.85.1(`/usr/local/bin/pi`);Ollama 在 `localhost:11434`(Windows 宿主,镜像网络);git 推送走 SSH over 443。
