@@ -20,7 +20,7 @@ import { dirname, join } from "node:path";
  *  - HTTP_PROXY / HTTPS_PROXY    预留空值占位(结构在,值暂空)
  *  - PIDESK_HOST = 1
  */
-export function buildPiEnv(dataDir: string): NodeJS.ProcessEnv {
+export function buildPiEnv(dataDir: string, extraEnv: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
   const agentDir = join(dataDir, "pi-agent");
   return {
     PI_CODING_AGENT_DIR: agentDir,
@@ -28,6 +28,7 @@ export function buildPiEnv(dataDir: string): NodeJS.ProcessEnv {
     HTTP_PROXY: "",
     HTTPS_PROXY: "",
     PIDESK_HOST: "1",
+    ...extraEnv,
   };
 }
 

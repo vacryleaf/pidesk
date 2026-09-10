@@ -8,6 +8,7 @@
 import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import type { BrowserWindow } from "electron";
+import { loadConfig } from "./config-center.js";
 import { loadProviderConfig, saveProviderConfig } from "./settings-store.js";
 import { PiPool, bootstrapDataDir, type PoolProcessLike } from "@pidesk/pi-host";
 import {
@@ -66,7 +67,7 @@ export class PiHostManager {
   /** 创建会话:生成 id → 池 acquire(启动+握手)→ 挂事件推送 → 入册;返回 sessionId */
   async createSession(win: BrowserWindow): Promise<string> {
     const sessionId = randomUUID();
-    const proc = (await this.pool.acquire(sessionId)) as HostProcessLike;
+    const proc = (await this.pool.acquire(sessionId, { env: this.proxyEnv() })) as HostProcessLike;
     const record: SessionRecord = { process: proc, win, pendingUiRequests: [] };
     this.sessions.set(sessionId, record);
     this.wireProcess(sessionId, record);
@@ -148,6 +149,15 @@ export class PiHostManager {
     return this.redactConfig(loadProviderConfig(this.dataDir));
   }
 
+  /** 从 config-center app.json 读代理设置,装配子进程 env(HTTP_PROXY/HTTPS_PROXY) */
+  private proxyEnv(): NodeJS.ProcessEnv {
+    const { proxy } = loadConfig(this.dataDir).app;
+    const env: NodeJS.ProcessEnv = {};
+    if (proxy.http) env.HTTP_PROXY = proxy.http;
+    if (proxy.https) env.HTTPS_PROXY = proxy.https;
+    return env;
+  }
+
   /** apiKey 脱敏:存在则替换为 "********"(M1 简化:不做前 4 后 4 形态,不回显真实值) */
   private redactConfig(config: ProviderConfig): ProviderConfig {
     return { ...config, ...(config.apiKey ? { apiKey: "********" } : {}) };
@@ -174,7 +184,7 @@ export class PiHostManager {
       }
       this.pool.release(sessionId);
       try {
-        const proc = (await this.pool.acquire(sessionId, { sessionFile })) as HostProcessLike;
+        const proc = (await this.pool.acquire(sessionId, { sessionFile, env: this.proxyEnv() })) as HostProcessLike;
         record.process = proc;
         this.wireProcess(sessionId, record);
         if (sessionFile && existsSync(sessionFile)) {

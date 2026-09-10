@@ -36,7 +36,7 @@ export interface PoolProcessLike {
   /** 当前状态(判定 crashed → 走重启) */
   readonly state: PiProcessState;
   /** 启动并握手(成功即 ready) */
-  start(dataDir: string, expectedVersion?: string): Promise<unknown>;
+  start(dataDir: string, expectedVersion?: string, extraEnv?: NodeJS.ProcessEnv): Promise<unknown>;
   /** 宿主主动停(置 stopped,退出兜底见 PiProcess) */
   stop(): void;
   /** 发送任意命令 */
@@ -147,7 +147,7 @@ export class PiPool {
    * 幂等:同 id 重复 acquire 返回现有进程,不占新槽。
    * @throws 并发已达上限(信息含"并发已达上限 4")/ start 失败(原样上抛,池内走崩溃重启)
    */
-  async acquire(id: string, opts?: { sessionFile?: string | null }): Promise<PoolProcessLike> {
+  async acquire(id: string, opts?: { sessionFile?: string | null; env?: NodeJS.ProcessEnv }): Promise<PoolProcessLike> {
     const existing = this.sessions.get(id);
     if (existing) return existing.process;
     if (this.sessions.size >= MAX_SESSIONS) {
@@ -156,7 +156,7 @@ export class PiPool {
     const entry = this.createEntry(id, opts?.sessionFile ?? null);
     this.sessions.set(id, entry);
     try {
-      await entry.process.start(this.dataDir, this.expectedVersion);
+      await entry.process.start(this.dataDir, this.expectedVersion, opts?.env);
     } catch (err) {
       // 启动失败视同崩溃:走统一退避重试(exit 事件若也到达,由 restartPending 守卫去重)
       this.handleCrash(entry);

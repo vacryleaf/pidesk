@@ -165,6 +165,8 @@ export class PiProcess {
   private killTimer: ReturnType<typeof setTimeout> | null = null;
   /** start 去重守卫 */
   private startPromise: Promise<unknown> | null = null;
+  /** start 透传的额外 env(如代理设置),叠加在 buildPiEnv 之上 */
+  private extraEnv: NodeJS.ProcessEnv = {};
 
   private stateCbs: StateListener[] = [];
   private eventCbs: EventListener[] = [];
@@ -223,10 +225,11 @@ export class PiProcess {
    * @returns 握手快照(get_state 的 data)
    * @rejects 预检失败/spawn 失败/握手失败(此时状态已迁 crashed)
    */
-  start(dataDir: string, expectedVersion?: string): Promise<unknown> {
+  start(dataDir: string, expectedVersion?: string, extraEnv: NodeJS.ProcessEnv = {}): Promise<unknown> {
     if (this.startPromise) {
       return Promise.reject(new Error("PiProcess.start 已调用,禁止重复启动"));
     }
+    this.extraEnv = extraEnv;
     this.startPromise = this.doStart(dataDir, expectedVersion);
     return this.startPromise;
   }
@@ -244,7 +247,7 @@ export class PiProcess {
       this.setState("handshaking");
       // ③ spawn:<binary> --mode rpc,注入隔离 env(buildPiEnv 叠加在 process.env 之上)
       const child = this.spawnImpl(binary, ["--mode", "rpc"], {
-        env: { ...process.env, ...buildPiEnv(dataDir) },
+        env: { ...process.env, ...buildPiEnv(dataDir, this.extraEnv) },
         stdio: ["pipe", "pipe", "pipe"],
       });
       this.proc = child;
