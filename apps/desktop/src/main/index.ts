@@ -65,15 +65,16 @@ function createWindow(): BrowserWindow {
 if (process.env.WSL_DISTRO_NAME) {
   app.commandLine.appendSwitch("disable-gpu");
   app.commandLine.appendSwitch("no-sandbox");
+  // WSLg Wayland 环境需在启动 Electron 的 shell 中已存在;
+  // 进程内晚设 WAYLAND_DISPLAY/XDG_RUNTIME_DIR 会触发 /dev/shm 共享内存崩溃
   const wslgWaylandSocket = "/mnt/wslg/runtime-dir/wayland-0";
-  if (
+  const useWslgWayland =
     process.platform === "linux" &&
-    existsSync(wslgWaylandSocket) &&
-    process.env.PIDESK_OZONE !== "x11"
-  ) {
-    // WSLg 下默认走 Wayland + IME:X11/XWayland 收不到 Windows 中文输入法
-    process.env.WAYLAND_DISPLAY ??= "wayland-0";
-    process.env.XDG_RUNTIME_DIR = "/mnt/wslg/runtime-dir";
+    process.env.PIDESK_OZONE !== "x11" &&
+    Boolean(process.env.WAYLAND_DISPLAY) &&
+    existsSync(wslgWaylandSocket);
+
+  if (useWslgWayland) {
     app.commandLine.appendSwitch("ozone-platform", "wayland");
     app.commandLine.appendSwitch("enable-wayland-ime");
   } else {
