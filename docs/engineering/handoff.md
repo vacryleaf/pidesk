@@ -7,10 +7,10 @@
 
 ## 交接快照
 
-- **阶段**:M1 编码中——T1 已合入,下一卡 T2。
-- **已完成**:E 详设全部过环节一(pi-protocol v1.0;m1-design v1.0,环节一裁决:M1 单连接、dev 数据目录 `<仓库根>/.pidesk-dev`);m1-tasks v1.1(14 卡,外部评审四条吸收)。
-- **卡进度**:T1 ✅ `5e1e6bb`(workspace 根 + @pidesk/shared:typecheck 零错、test 6/6、build 产物齐);T2~T13(含 T10a/b)待派。
-- **下一步**:T2(ui 底座 + desktop Electron 壳,32k 模型);派发前主线程预消化:实查 electron-vite 5 / Vite 8 配对兼容,结论写死进任务卡(风险点,卡内已有降 Vite 7 兜底)。
+- **阶段**:M1 编码中——T1 已合入,下一卡 T2a。
+- **已完成**:E 详设全部过环节一(pi-protocol v1.0;m1-design v1.0,环节一裁决:M1 单连接、dev 数据目录 `<仓库根>/.pidesk-dev`);m1-tasks v2.0(26 卡:剩余全部 16k、最小粒度拆分,每卡含主线程前置段)。
+- **卡进度**:T1 ✅ `5e1e6bb`(workspace 根 + @pidesk/shared:typecheck 零错、test 6/6、build 产物齐);T2a~T13b 共 25 张待派(顺序见 m1-tasks §0 总表)。
+- **下一步**:T2a(ui 包底座与设计令牌);派发前预消化:实查 tailwind4/vite/plugin-react 配对写死进卡;T2b 前同法实查 electron-vite5/vite 配对。
 
 ## 教训固化(当前生效的派发环境事实)
 
