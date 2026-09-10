@@ -20,3 +20,10 @@
   1. 超时分级:即时类命令(get_state/set_*/get_*)5s;`prompt`(preflight 响应)30s;`compact` 120s;`bash`/`export_html` 不设超时(事件驱动 + abort/abort_bash 兜底);
   2. 进程退出兜底:`stdin.end()` 优雅停 → 宽限 3s → SIGTERM → 再 2s → `taskkill /T`(Windows)/ SIGKILL 树杀。
 - **影响**:pi-host 实现按此参数落常量(集中定义,可配);初值在 M1 实测后可经 DR 修订。
+
+## DR-003 构建链 vite 7 配对(修正 m1-design §1)
+
+- **日期**:2026-09-10
+- **背景**:m1-design §1 写定 electron-vite 5.0.0 / vite 8.2.2;T2b 派发前实查 peer:electron-vite@5 仅允许 vite ^5||^6||^7,且 @vitejs/plugin-react 6.x 全系要求 vite ^8,与 electron-vite 互斥。
+- **决定**:vite 固定 ^7.0.0(实装 7.3.6)+ @vitejs/plugin-react 降 5.1.4(peer 含 ^7);electron 44.3.0 / electron-vite 5.0.0 不变。
+- **影响**:m1-design §1 版本表以本 DR 为准;后续升级 electron-vite 6/插件 6 时一并评估 vite 8,须重跑 T2b 构建验证。

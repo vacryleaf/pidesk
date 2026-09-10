@@ -10,4 +10,4 @@
 | @earendil-works/pi-coding-agent | 0.85.1 | dev | 协议类型字典(DR-001) | MIT | 2026-09-10 | import type 零运行时,上游 400d6905 |
 | react-markdown / remark-gfm | 10.1.0 / 4.0.1 | runtime | 对话流 markdown 渲染 | MIT | 2026-09-10 | ui-prototype §4 组件基建 |
 | eslint / @eslint/js / typescript-eslint | 10.10.0 / 10.0.1 / 8.70.0 | dev | 静态门槛(CI lint) | MIT | 2026-09-10 | dev-process §6;边界规则 no-restricted-imports |
-| jsdom | 30.0.1 | dev | ui 包 DOM 组件测试环境(vitest environment) | MIT | 2026-02-14 | T9a 消息渲染三件需 DOM 断言,MIT |
+| jsdom | 30.0.1 | dev | ui 包 DOM 组件测试环境(vitest environment) | MIT | 2026-09-10 | T9a 消息渲染三件需 DOM 断言,MIT |
