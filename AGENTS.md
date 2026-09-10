@@ -1,77 +1,48 @@
 # pidesk 开发协作规则
 
-> 本文件由 pi 主线程与所有子线程自动加载,是本仓库的开发纪律与**会话上下文入口**。
-> 层级:product-plan.md(做什么)> dev-process.md(怎么流转)> 本文件(日常纪律)。
+> 层级:product-plan.md(做什么)> dev-process.md(怎么流转)> 本文件(日常纪律)。冲突时修订下游并对齐。
 
-## 运行身份守卫
+## 身份与语言
 
-- 本仓库属主为 WSL 默认用户 **harry**;主线程 pi 会话必须以 harry 运行,所有命令直接执行,**禁止 sudo/su 包装**。
-- 若检测到当前用户是 root:停止一切写操作,提示用户以 harry 重新启动会话(Windows 终端打开 Ubuntu 即默认 harry:`cd ~/pidesk && pi`)。
+- 仓库属主 **harry**,主线程以 harry 运行,禁 sudo/su;检测到 root → 停止写操作,提示以 harry 重启会话。
+- 永远中文:回复、注释、提交信息、文档。
 
-## 语言纪律
+## 两级 pi 架构
 
-**永远使用中文**:回答、注释、提交信息、文档,一律中文。
+- **主线程**(编排):拆卡、派发、验收、集成、git 提交推送;不写实现代码(例外:E 阶段规划产物由主线程亲写)。
+- **子线程**(执行):一律经 `scripts/dispatch.sh -t "<任务>" -v "<验收命令>"` 派发(返工加 `-c` 附问题清单),禁手工拼 pi 命令;会话隔离于 `/home/harry/.pi-worker`(已关 AGENTS.md/skills/模板注入,thinking off);禁 git、禁新增依赖、只改工作区。
+- 同一卡 >3 轮失败 → 熔断升级用户(详 dev-process §8)。
 
-## 角色分工(两级 pi 架构)
+## 任务卡纪律(16k 是物理约束)
 
-- **主线程**(你):负责任务拆解、派发、验收、集成、git 提交推送。**不直接写实现代码**(例外:E 阶段设计文档、任务卡等规划产物由主线程亲自撰写)。
-- **子线程**(开发执行者):由主线程通过派发脚本启动,**禁止绕过脚本手工拼 pi 命令**:
+- 子线程上下文 16k:静态 ~4.5k(系统提示+注入+任务卡),动态余量 ~10k;超预算**拆卡**,不换大上下文(`-m 32k` 须报备理由)。
+- **预消化**:install、版本实查、环境修复等大输出/确定性操作由主线程派发前完成;子线程卡只含"写码 + 单次验收";任务卡自包含(规格内联到照抄级,禁子线程探索性读 docs)。
+- 每卡:单一职责、1~3 实现文件、明确产出路径、验收命令作 `-v`(一律 `2>&1 | tail -20` 截断)。
 
-  ```bash
-  # 首次派发(任务描述 + 验收命令均必填)
-  scripts/dispatch.sh -t "<任务描述>" -v "<验收命令>"
-  # 返工:续接原会话,附具体问题清单与原始报错
-  scripts/dispatch.sh -c -t "返工:<问题清单>" -v "<验收命令>"
-  ```
+## 验收红线
 
-  脚本内置:作业纪律(工具落盘/范围约束)、环境约束(Node24/ESM 扩展名/pnpm/WSL)、完工标准(自行跑验收命令直到通过才许报告完成)。子线程默认开思考(medium),默认模型 27B-16k,任务卡按 16k 上下文预算拆分。
-  - 子线程配置/会话隔离于 `/home/harry/.pi-worker/`,与主线程互不可见(同时是 pidesk 产品隔离机制的演练);会话记录可供主线程审查工具调用过程;同一工作目录串行派发,避免 --continue 会话归属混淆。
-  - 子线程**不做 git 提交**,只改工作区;提交由主线程验收后统一执行。
+- DoD:编译过 → 读 diff 对照规格(**不得只跑测试**)→ 验收命令绿 → 无越范围改动。
+- 提交:Conventional Commits 中文、一卡一 commit、main 直合;推后 CI 兜底。
+- 提请用户验收必附验收包(`docs/acceptance/mX-acceptance.md`);UI 偏离 ui-prototype 令牌系统即打回;可用性红线:新用户不看文档能完成核心操作;涉 pi 协议须对照上游 docs 核实。
 
-## 任务拆分原则(主线程)
+## 依赖报备制
 
-1. **16k 上下文优先**:每张任务卡必须按 16k 预算拆分——估算"任务描述 + 内联现状 + 产出"能否容纳;超预算信号(需读第 4 个文件/产出长文件)= 必须拆卡,禁止硬塞导致 compact 丢上下文。
-2. 每个子任务:单一职责、独立可验收、范围 1~3 个文件、有明确产出路径与完成标准。
-3. 派发信息必须自包含:目标、涉及文件**具体路径**、约束(引用本文件与 docs/)、验收标准(**必须含验收命令**,作为 `-v` 参数传入);关键现状摘要直接内联,减少子线程探索性读取。
-4. 模型覆盖(`-m`)仅按需:`32k` = 任务需中等量文档读取;超出 32k 预算 = 继续拆卡,**不是换更大上下文**。频繁切模型有冷启动成本,串行任务尽量同模型。
-5. 落盘要求、环境约束、自验闭环由 `scripts/dispatch.sh` 机械化注入;任务描述只写目标与范围。
-6. 禁止开放式大任务;宁可多轮小步。
+仅必须时引入;**无需批准但必须告知**:登记 `docs/DEPENDENCIES.md` + 验收汇报列明;子线程禁自行引入。
 
-## 验收流程(主线程)
+## 会话恢复(新主线程按序读)
 
-1. 子线程完成后**必须实际验证**:读 diff、跑构建、跑测试、逐条对照验收标准。
-2. **不通过** → 整理文件+行级问题清单,派回子线程返工(同一任务 >3 轮 → 熔断升级用户,dev-process §9 环节三);禁止主线程自己动手修。
-3. **通过** → 主线程统一提交(Conventional Commits,中文描述)并推送。
-4. 红线:编译必须过;不引入规划外依赖;UI 改动必须符合 `docs/ui-prototype-plan.md` 令牌系统;涉及 pi 协议(RPC/扩展)必须对照上游 docs 核实;功能交付以"**新用户不看文档能完成核心操作**"为底线(可用性红线,dev-process §4.1)。
-5. **提请用户验收时必须随附验收包**(`docs/acceptance/mX-acceptance.md`:前置条件/分步操作→预期结果/判定标准/已知问题/回归清单);无验收包不得进入用户验收。
-
-## 依赖纪律(报备制)
-
-- 仅在必须时引入第三方依赖;**无需用户批准,但必须告知**。
-- 程序:主线程评估 → 登记 `docs/DEPENDENCIES.md`(包/版本/用途/License/日期)→ 在相关验收汇报中向用户列明。
-- 子线程禁止自行引入依赖;派发卡写明允许使用的依赖范围。
-
-## 会话恢复(主线程交接入口)
-
-新接手的主线程会话按序读取后向用户报到当前阶段,再继续工作:
-
-1. `docs/product-plan.md`(S1 规划,T1-T9 裁决、里程碑、风险);
-2. `docs/engineering/dev-process.md`(流程 P1-P5、任务卡生命周期);
-3. `docs/engineering/decisions.md`(DR 工程裁决);
-4. `docs/engineering/` 下 E 阶段产物(pi-protocol / m1-design / m1-tasks);
-5. `git log --oneline -15` 了解最近动作;
-6. 对照下方「交接快照」确定当前位置与下一步。
+1. `docs/product-plan.md` → 2. `docs/engineering/dev-process.md` → 3. `docs/engineering/decisions.md` → 4. `docs/engineering/`(pi-protocol/m1-design/m1-tasks) → 5. `git log --oneline -15` → 6. 下方快照。
 
 ## 交接快照(每次交接/里程碑必更新)
 
-- **阶段**:E 详设收口(pi-protocol、m1-design 均过环节一;m1-tasks v1.0 已落盘,**待用户确认任务卡**)。
-- **已完成**:pi-protocol v1.0(DR-001/DR-002);m1-design v1.0 环节一通过(2026-09-10 裁决:M1 单连接;dev 数据目录 `<仓库根>/.pidesk-dev`,`PIDESK_DATA_DIR` 可覆盖);m1-tasks v1.0——13 张卡(T1~T13),串行派发,每卡含验收命令,卡表见其 §0。
-- **待用户裁决**:m1-tasks.md 任务卡确认(环节一收口,确认即 M1 开工)。
-- **下一步**:用户确认任务卡 → 主线程按序派发 T1 → 逐卡验收合入 → T13 后跑 L4 + 出口核验 → 产出验收包提请环节二。
+- **阶段**:M1 编码中——T1(workspace+shared)按预消化模式重做。
+- **已完成**:E 详设全部过环节一(pi-protocol v1.0;m1-design v1.0 裁决:M1 单连接、dev 数据目录 `<仓库根>/.pidesk-dev`);m1-tasks **v1.1**(14 卡:T1~T13 含 T10a/b;T5/T6 对调——env 装配是状态机前置;外部评审四条吸收)。
+- **T1 状态**:四次派发失败,根因闭环 = 16k 临界 × pi 0.85.1 compaction bug(压缩即崩);盘上有第 4 次会话半成品(根配置 8 文件 + shared 2 源文件)待核验复用。
+- **下一步**:T1 预消化(核验→补齐→install→派最小卡)→ 按序 T2+。
+- **教训固化**:长输出命令必须 tail 截断;pi 16k 临界区是雷区;主线程 bash 工具超时 ≤60s,长任务 `setsid` 后台+轮询;可用 pnpm 在 `~/.npm-global/bin`(PATH 内的可能损坏)。
 
-## 项目要点速查
+## 要点速查
 
-- 流程权威:`docs/engineering/dev-process.md`(任务卡生命周期/测试分层 L1-L4/三确认环节/依赖报备制);裁决:product-plan §2(T1-T9)+ dev-process 文末(P1-P5)+ decisions.md(DR)。
-- 权威规划:`docs/product-plan.md`;UI 规格:`docs/ui-prototype-plan.md`(shadcn/ui 令牌系统,石墨暗色)。
-- 技术栈定版见 `docs/engineering/m1-design.md` §1(Electron 44 + React 19 + TS 5.9);pi 类型 devDependency 0.85.1(DR-001)。
-- 环境:WSL Ubuntu(默认用户 harry);仓库 `/home/harry/pidesk`(Windows 经 `\\wsl.localhost\Ubuntu\home\harry\pidesk` 访问);pi CLI 0.85.1 在 `/usr/local/bin/pi`;Ollama `localhost:11434`(Windows 宿主,镜像网络);git 推送走 SSH over 443。
+- 裁决:product-plan §2(T1-T9)+ dev-process 文末(P1-P5)+ decisions.md(DR-001 类型方案A、DR-002 超时/退出兜底)。
+- 技术栈:`docs/engineering/m1-design.md` §1(Electron 44 + React 19 + TS 5.9;pi 类型 devDep 0.85.1)。
+- 环境:WSL Ubuntu(harry);仓库 `/home/harry/pidesk`;pi 0.85.1 `/usr/local/bin/pi`;Ollama `localhost:11434`;git 推送 SSH over 443;Windows 经 `\\wsl.localhost\Ubuntu\home\harry\pidesk`。
