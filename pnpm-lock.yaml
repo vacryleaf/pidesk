@@ -23,6 +23,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@pidesk/pi-host':
+        specifier: workspace:*
+        version: link:../../packages/pi-host
       '@pidesk/shared':
         specifier: workspace:*
         version: link:../../packages/shared

@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@pidesk/pi-host": "workspace:*",
     "@pidesk/shared": "workspace:*",
     "@pidesk/ui": "workspace:*",
     "react": "19.3.0",

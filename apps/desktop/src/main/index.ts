@@ -1,6 +1,8 @@
 // 主进程入口(m1-design §7 安全基线)
 import { fileURLToPath } from "node:url";
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
+import { registerIpcHandlers } from "./ipc.js";
+import { PiHostManager } from "./pi-host-manager.js";
 
 // 创建主窗口:默认尺寸 1280×800,最小 960×640
 function createWindow(): BrowserWindow {
@@ -30,9 +32,11 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
-// 生命周期:ready 后建窗口
+// 生命周期:ready 后建窗口,再接线 IPC(T8a)
 app.whenReady().then(() => {
-  createWindow();
+  const win = createWindow();
+  const manager = new PiHostManager();
+  registerIpcHandlers(ipcMain, manager, win);
 });
 
 // 全窗口关闭时退出(linux/win 无 dock 驻留需求,统一 quit)
