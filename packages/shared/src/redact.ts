@@ -35,7 +35,7 @@ const QUERY_RE = /(?=[?&])([?&][^&\s"'\n]*?(?:key|token|secret|api[_-]?key)\s*=\
 function redactPlain(s: string): string {
   return s
     .replace(BEARER_RE, (_m, prefix: string) => prefix + MASK)
-    .replace(QUERY_RE, (_m, kv: string, val: string) => kv + MASK)
+    .replace(QUERY_RE, (_m, kv: string) => kv + MASK)
     .replace(SK_RE, MASK);
 }
 

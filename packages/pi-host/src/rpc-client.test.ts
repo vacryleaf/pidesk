@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { RpcClient, TIMEOUT_MS, NO_TIMEOUT } from "./rpc-client.js";
+import { RpcClient, TIMEOUT_MS, NO_TIMEOUT, type RpcFrame } from "./rpc-client.js";
 
 /**
  * 内存双工 mock:
@@ -117,7 +117,7 @@ describe("rpc-client", () => {
   it("⑤ 事件先于响应到达不干扰关联(prompt 乱序容忍)", async () => {
     const m = makeMock();
     const c = m.newClient();
-    const events: any[] = [];
+    const events: RpcFrame[] = [];
     c.onEvent((f) => events.push(f));
     const p = c.request("prompt", { text: "hi" }, { timeoutMs: TIMEOUT_MS.prompt });
     const id = m.sentIds().prompt;

@@ -56,7 +56,8 @@ export type PideskProcessState =
 import type { JsonAgentSessionEvent, ExtensionUIRequest, ExtensionError } from "./protocol";
 
 export interface InvokeMap {
-  [INVOKE_CHANNELS.SESSION_CREATE]: [{}, { sessionId: string }];
+  // 无入参:用 Record<string, never> 表达"空对象",替代会触发 lint 的 {}
+  [INVOKE_CHANNELS.SESSION_CREATE]: [Record<string, never>, { sessionId: string }];
   [INVOKE_CHANNELS.SESSION_PROMPT]: [
     { sessionId: string; message: string },
     { ok: boolean },

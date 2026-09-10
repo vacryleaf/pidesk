@@ -18,7 +18,7 @@
 
 import { spawn as nodeSpawn } from "node:child_process";
 import { createJsonlFramer } from "./jsonl-framing.js";
-import { RpcClient, TIMEOUT_MS, type TransportErrorListener } from "./rpc-client.js";
+import { RpcClient, TIMEOUT_MS, type TransportErrorListener, type RpcFrame } from "./rpc-client.js";
 import { buildPiEnv } from "./env.js";
 import {
   checkPiVersion,
@@ -72,7 +72,7 @@ export interface RpcClientLike {
     opts?: { timeoutMs?: number },
   ): Promise<{ success: true; data?: unknown } | { success: false; error: string }>;
   handleLine(line: string): void;
-  onEvent(cb: (frame: any) => void): void;
+  onEvent(cb: (frame: RpcFrame) => void): void;
   onTransportError(cb: TransportErrorListener): void;
   close(): void;
 }
@@ -112,7 +112,7 @@ export interface PiProcessDeps {
 }
 
 type StateListener = (state: PiProcessState, snapshot?: unknown) => void;
-type EventListener = (frame: any) => void;
+type EventListener = (frame: RpcFrame) => void;
 type ExitListener = (info: PiProcessExitInfo) => void;
 
 export class PiProcess {
@@ -128,7 +128,7 @@ export class PiProcess {
   /** exit 事件已到达(spawn error 不置位;防重入) */
   private exited = false;
   /** ready 之前到达的会话事件缓冲,握手完成后按序重放 */
-  private eventBuffer: any[] = [];
+  private eventBuffer: RpcFrame[] = [];
   /** stderr 累积(≤64KB,保留尾部) */
   private stderrBuf = "";
   /** spawn error 事件信息(供 onExit) */
@@ -258,6 +258,7 @@ export class PiProcess {
       this.crash(`启动失败: ${msg}`);
       throw new Error(
         `PiProcess 启动失败: ${msg}(stderr 尾部: ${this.stderrBuf.slice(-500) || "无"})`,
+        { cause: err },
       );
     }
   }
@@ -348,12 +349,12 @@ export class PiProcess {
     this.stateCbs.forEach((cb) => cb(next, snapshot));
   }
 
-  private emitEvent(frame: any): void {
+  private emitEvent(frame: RpcFrame): void {
     this.eventCbs.forEach((cb) => cb(frame));
   }
 
   /** RPC 客户端事件消费:先做状态迁移,再缓冲/转发 */
-  private consumeEvent(frame: any): void {
+  private consumeEvent(frame: RpcFrame): void {
     const type = frame !== null && typeof frame === "object" ? frame.type : undefined;
     if (this._state === "busy" && type === "agent_settled") {
       this.setState("ready");
@@ -377,6 +378,8 @@ export class PiProcess {
 
   /** 进入 crashed(终态);若进程仍活着则直接 SIGKILL,交由 exit 事件收尾 */
   private crash(reason: string): void {
+    // reason 为调用方语义标注,当前不参与终态迁移(显式消费以避开 no-unused-vars)
+    void reason;
     if (this._state !== "crashed" && this._state !== "stopped") {
       this.setState("crashed");
     }

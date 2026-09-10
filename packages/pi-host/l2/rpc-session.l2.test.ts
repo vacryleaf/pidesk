@@ -10,8 +10,8 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { PiProcess, type PiProcessExitInfo } from "../src/pi-process.js";
-import { RpcClient, TIMEOUT_MS } from "../src/rpc-client.js";
-import { buildPiEnv, bootstrapDataDir } from "../src/env.js";
+import { RpcClient, TIMEOUT_MS, type RpcFrame } from "../src/rpc-client.js";
+import { bootstrapDataDir } from "../src/env.js";
 
 // ---- pi 二进制探测:PIDESK_PI_PATH 优先,其次搜 PATH(与 version.ts 解析序对齐) ----
 
@@ -148,7 +148,7 @@ describe.skipIf(!hasPi)("L2 真 pi RPC 闭环(pi 0.85.1)", () => {
       const { proc } = makeProc();
       await proc.start(dataDir, "0.85.1");
 
-      const events: any[] = [];
+      const events: RpcFrame[] = [];
       proc.onEvent((frame) => events.push(frame));
 
       const promptRes = await proc.request(
@@ -161,7 +161,9 @@ describe.skipIf(!hasPi)("L2 真 pi RPC 闭环(pi 0.85.1)", () => {
       await vi.waitFor(
         () => {
           const hasTextDelta = events.some(
-            (f) => f.type === "message_update" && f.assistantMessageEvent?.type === "text_delta",
+            (f) =>
+              f.type === "message_update" &&
+              (f.assistantMessageEvent as { type?: string } | undefined)?.type === "text_delta",
           );
           expect(hasTextDelta).toBe(true); // 至少 1 个 text_delta
           expect(events.some((f) => f.type === "agent_settled")).toBe(true); // 回合收尾
@@ -174,12 +176,13 @@ describe.skipIf(!hasPi)("L2 真 pi RPC 闭环(pi 0.85.1)", () => {
       });
       expect(msgsRes.success).toBe(true);
       const messages =
-        (msgsRes as { success: true; data?: { messages?: any[] } }).data?.messages ?? [];
+        (msgsRes as { success: true; data?: { messages?: Array<Record<string, unknown>> } }).data
+          ?.messages ?? [];
       const replyText = messages
         .filter((m) => m.role === "assistant")
         .flatMap((m) =>
           Array.isArray(m.content)
-            ? m.content.filter((c: any) => c.type === "text").map((c: any) => String(c.text))
+            ? m.content.filter((c) => c.type === "text").map((c) => String(c.text))
             : [],
         )
         .join("");

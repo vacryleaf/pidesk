@@ -1,0 +1,107 @@
+# CI 主流程(T13b):push main / 手动触发
+# 步骤序遵循 dev-process §6:install → lint → typecheck → L1+L2 → build
+# 无 secrets 依赖;产物矩阵 P3:Windows NSIS 优先,Linux 只做本地覆盖不出包,macOS 延后 M5
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 最小权限:仅读取仓库内容,不需要任何 secret
+permissions:
+  contents: read
+
+jobs:
+  # ---------------- Linux:静态检查 + L1/L2 测试 + 构建 ---------------- #
+  linux:
+    name: Linux 检查与测试
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # pnpm 必须先于 setup-node,否则 cache: pnpm 无法定位 store
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - name: 安装 Node 24 并启用 pnpm 缓存
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint(eslint .)
+        run: pnpm exec eslint .
+
+      - name: 类型检查(pnpm -r typecheck)
+        run: pnpm -r typecheck
+
+      # L2 真机测试要真实 pi 二进制:version.ts/L2 用例按 PATH 查找 pi
+      # 不设 PI_L2_FULL,避免引入模型依赖(需模型的用例自动跳过)
+      - name: 安装 pi standalone 到 /usr/local/bin(L2 真机用)
+        run: |
+          set -euo pipefail
+          URL="https://github.com/earendil-works/pi/releases/download/v0.85.1/pi-linux-x64.tar.gz"
+          curl -fSL --retry 3 -o /tmp/pi-linux-x64.tar.gz "$URL"
+          mkdir -p /tmp/pi-x
+          tar -xzf /tmp/pi-linux-x64.tar.gz -C /tmp/pi-x
+          BIN="$(find /tmp/pi-x -type f -name pi | head -n 1)"
+          test -n "$BIN"
+          sudo install -m 0755 "$BIN" /usr/local/bin/pi
+          pi --version
+
+      - name: 测试(pnpm -r test:L1 + L2 真机)
+        run: pnpm -r test
+
+      - name: 构建(pnpm -r build)
+        run: pnpm -r build
+
+  # ---------------- Windows:NSIS 安装包产物 ---------------- #
+  windows:
+    name: Windows NSIS 产物
+    needs: linux
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - name: 安装 Node 24 并启用 pnpm 缓存
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # 远端模式:下载 Windows 资产 + SHA256SUMS 校验后落 resources/pi
+      # (extraResources 会把它打进安装包)
+      - name: 拉取 pi(windows-x64,远端模式)
+        shell: bash
+        run: bash scripts/fetch-pi.sh windows-x64
+
+      - name: 构建(pnpm -r build)
+        run: pnpm -r build
+
+      - name: 打包 NSIS(electron-builder --win x64)
+        run: pnpm --filter @pidesk/desktop exec electron-builder --win --x64
+
+      - name: 上传安装包
+        uses: actions/upload-artifact@v4
+        with:
+          name: pidesk-windows-nsis
+          path: apps/desktop/dist/*.exe
+          if-no-files-found: error

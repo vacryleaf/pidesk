@@ -1,8 +1,8 @@
 // pi-process 单元测试:注入 fake spawn + fake/real client,覆盖全部状态迁移与三阶段兜底定时器(fake timers)。
 // 纪律:不 mock node:child_process(T5b 教训,hoisting/展开引发异常调用),全部经构造注入 fake。
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { RpcClient } from "./rpc-client.js";
-import { PiProcess, type ChildProcessLike } from "./pi-process.js";
+import { RpcClient, type RpcFrame } from "./rpc-client.js";
+import { PiProcess, type ChildProcessLike, type PiProcessExitInfo, type VersionCheckLike } from "./pi-process.js";
 
 /** 注入用 fake 子进程:记录 stdin 写入 / kill 信号,手动派发 stdout/stderr/error/exit */
 function makeFakeChild() {
@@ -53,20 +53,23 @@ function makeFakeChild() {
 class FakeClient {
   requests: Array<{ command: string; args?: object }> = [];
   closeCount = 0;
-  private resolvers = new Map<string, (v: any) => void>();
-  private rejecters = new Map<string, (e: any) => void>();
-  private eventCbs: Array<(f: any) => void> = [];
+  private resolvers = new Map<string, (v: { success: true; data?: unknown }) => void>();
+  private rejecters = new Map<string, (e: unknown) => void>();
+  private eventCbs: Array<(f: RpcFrame) => void> = [];
   private transportCbs: Array<(r: string) => void> = [];
 
-  request(command: string, args?: object, _opts?: { timeoutMs?: number }): Promise<any> {
+  request(
+    command: string,
+    args?: object,
+  ): Promise<{ success: true; data?: unknown } | { success: false; error: string }> {
     this.requests.push({ command, args });
     return new Promise((resolve, reject) => {
       this.resolvers.set(command, resolve);
       this.rejecters.set(command, reject);
     });
   }
-  handleLine(_line: string): void {}
-  onEvent(cb: (f: any) => void): void {
+  handleLine(): void {}
+  onEvent(cb: (f: RpcFrame) => void): void {
     this.eventCbs.push(cb);
   }
   onTransportError(cb: (r: string) => void): void {
@@ -84,7 +87,7 @@ class FakeClient {
   reject(command: string, error: string): void {
     this.rejecters.get(command)?.(new Error(error));
   }
-  emitEvent(frame: any): void {
+  emitEvent(frame: RpcFrame): void {
     this.eventCbs.forEach((cb) => cb(frame));
   }
   emitTransport(reason: string): void {
@@ -95,20 +98,20 @@ class FakeClient {
 /** 测试装配器:fake spawn + fake(或 real)client + 回调收集 */
 function makeHarness(opts: {
   realClient?: boolean;
-  versionCheck?: (binary: string, expected: string, onWarn?: (i: any) => void) => Promise<any>;
+  versionCheck?: VersionCheckLike;
   findInPath?: (name: string) => string | null;
 } = {}) {
   const child = makeFakeChild();
   const fakeClient = new FakeClient();
   const states: string[] = [];
   const snapshots: unknown[] = [];
-  const events: any[] = [];
-  const exits: any[] = [];
-  const warns: any[] = [];
+  const events: RpcFrame[] = [];
+  const exits: PiProcessExitInfo[] = [];
+  const warns: unknown[] = [];
   const spawnImpl = vi.fn(() => child.child);
   const rpcFactory = opts.realClient
     ? vi.fn((sendRaw: (chunk: string) => void) => new RpcClient(sendRaw))
-    : vi.fn((_sendRaw: (chunk: string) => void) => fakeClient);
+    : vi.fn(() => fakeClient);
   const proc = new PiProcess({
     spawnImpl,
     rpcFactory,
@@ -222,7 +225,7 @@ describe("pi-process 状态机", () => {
     await expect(sp).rejects.toThrow(/启动失败/);
     expect(h.states).toEqual(["handshaking", "crashed"]);
     expect(h.exits).toHaveLength(1);
-    expect(h.exits[0].spawnError).toContain("ENOENT");
+    expect(h.exits[0]!.spawnError).toContain("ENOENT");
     expect(h.fakeClient.closeCount).toBeGreaterThanOrEqual(1); // 崩溃时关闭客户端
   });
 
@@ -234,7 +237,7 @@ describe("pi-process 状态机", () => {
     expect(h.states).toEqual(["handshaking", "ready", "crashed"]);
     expect(h.exits).toHaveLength(1);
     expect(h.exits[0]).toMatchObject({ code: 1, signal: null });
-    expect(h.exits[0].stderrTail).toContain("model load failed");
+    expect(h.exits[0]!.stderrTail).toContain("model load failed");
   });
 
   it("⑦ ready 中意外零退出(非宿主停机)→ stopped", async () => {
@@ -371,7 +374,7 @@ describe("pi-process 状态机", () => {
     h.child.emitExit(1, null); // 未握手进程即死
     await expect(sp).rejects.toThrow(/启动失败/);
     expect(h.states).toEqual(["handshaking", "crashed"]);
-    expect(h.exits[0].code).toBe(1);
+    expect(h.exits[0]!.code).toBe(1);
   });
 
   it("⑲ 握手响应 success:false → crashed,start 拒绝", async () => {

@@ -1,48 +1,24 @@
-// pidesk 根 ESLint flat config:基础规约 + 包边界约束
+// pidesk 根 ESLint flat config:基础规约 + 包边界约束(单向依赖 desktop→ui→pi-host→shared)
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  {
-    // 构建产物与依赖不参与 lint
-    ignores: ["dist/**", "node_modules/**"],
-  },
+  { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**", "**/out/**", "resources/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  // TS 项目:no-undef 交由 tsc 管理(ESLint 无法解析 TS 类型与 DOM 全局)
+  { rules: { "no-undef": "off" } },
+  // 包边界:核心 no-restricted-imports 仅按导入路径匹配,按文件位置分段用 flat config 的 files 覆盖
   {
-    // 包边界(zones):按目录锁定可引用的包,防止反向依赖
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.mjs"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          zones: [
-            {
-              // packages/shared 是最底层:禁止依赖 ui / pi-host / desktop
-              path: "packages/shared",
-              imports: [
-                { package: "@pidesk/ui" },
-                { package: "@pidesk/pi-host" },
-                { package: "@pidesk/desktop" },
-              ],
-            },
-            {
-              // packages/pi-host:禁止依赖 ui / desktop
-              path: "packages/pi-host",
-              imports: [
-                { package: "@pidesk/ui" },
-                { package: "@pidesk/desktop" },
-              ],
-            },
-            {
-              // packages/ui:禁止依赖 desktop
-              path: "packages/ui",
-              imports: [{ package: "@pidesk/desktop" }],
-            },
-            // apps/* 不受限
-          ],
-        },
-      ],
-    },
-  }
+    files: ["packages/shared/**/*.ts"],
+    rules: { "no-restricted-imports": ["error", { patterns: [{ group: ["@pidesk/ui", "@pidesk/pi-host", "@pidesk/desktop"], message: "shared 是最底层包,禁止反向依赖" }] }] },
+  },
+  {
+    files: ["packages/pi-host/**/*.ts"],
+    rules: { "no-restricted-imports": ["error", { patterns: [{ group: ["@pidesk/ui", "@pidesk/desktop"], message: "pi-host 禁止依赖 ui/desktop" }] }] },
+  },
+  {
+    files: ["packages/ui/**/*.ts", "packages/ui/**/*.tsx"],
+    rules: { "no-restricted-imports": ["error", { patterns: [{ group: ["@pidesk/desktop"], message: "ui 禁止依赖 desktop" }] }] },
+  },
 );

@@ -38,6 +38,17 @@ interface PendingRequest {
 /** 连续非合法 JSON 帧达到该阈值 → 触发 onTransportError("protocol_broken") */
 const BAD_LINE_THRESHOLD = 5;
 
+/** JSON 帧最小形状:仅声明分派所需字段,其余字段以索引签名透传(替代 any) */
+export interface RpcFrame {
+  type?: string;
+  id?: string;
+  command?: string;
+  success?: boolean;
+  error?: string;
+  data?: unknown;
+  [key: string]: unknown;
+}
+
 export class RpcClient {
   private pending = new Map<string, PendingRequest>();
   private seq = 0;
@@ -46,9 +57,9 @@ export class RpcClient {
   /** 协议级错误计数:解析失败帧 / 未知命令帧 */
   readonly protoErrorCount = { parse: 0, unknownCommand: 0 };
 
-  private eventCbs: Array<(frame: any) => void> = [];
-  private extUiCbs: Array<(frame: any) => void> = [];
-  private extErrCbs: Array<(frame: any) => void> = [];
+  private eventCbs: Array<(frame: RpcFrame) => void> = [];
+  private extUiCbs: Array<(frame: RpcFrame) => void> = [];
+  private extErrCbs: Array<(frame: RpcFrame) => void> = [];
   private transportErrCbs: Array<TransportErrorListener> = [];
 
   /**
@@ -103,7 +114,7 @@ export class RpcClient {
     const raw = line.trim();
     if (raw === "") return; // 空行不计入坏帧统计
 
-    let frame: any;
+    let frame: RpcFrame;
     try {
       frame = JSON.parse(raw);
     } catch {
@@ -129,13 +140,13 @@ export class RpcClient {
   // ---- 事件接口(可多次注册) ----
 
   /** 全部非 response/extension_* 的帧(会话事件),按收到顺序透传 */
-  onEvent(cb: (frame: any) => void): void {
+  onEvent(cb: (frame: RpcFrame) => void): void {
     this.eventCbs.push(cb);
   }
-  onExtensionUIRequest(cb: (frame: any) => void): void {
+  onExtensionUIRequest(cb: (frame: RpcFrame) => void): void {
     this.extUiCbs.push(cb);
   }
-  onExtensionError(cb: (frame: any) => void): void {
+  onExtensionError(cb: (frame: RpcFrame) => void): void {
     this.extErrCbs.push(cb);
   }
   onTransportError(cb: TransportErrorListener): void {
@@ -145,7 +156,7 @@ export class RpcClient {
   // ---- 内部 ----
 
   /** 按 type 分派合法 JSON 帧 */
-  private dispatch(frame: any): void {
+  private dispatch(frame: RpcFrame): void {
     if (frame === null || typeof frame !== "object") return;
     const type = frame.type;
     switch (type) {
