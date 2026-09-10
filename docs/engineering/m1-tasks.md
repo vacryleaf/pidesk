@@ -12,7 +12,7 @@
 
 | 卡 | 名称 | 依赖 | 模型 | 核心产出 |
 |----|------|------|------|----------|
-| T1 | workspace 根 + shared 类型字典(预消化) | — | 16k | 主线程预消化 install;子线程仅写 shared 4 源文件 |
+| T1 | workspace 根 + shared 类型字典(预消化) | — | 16k | ✅ 5e1e6bb 主线程预消化 install;子线程仅写 shared 源文件 |
 | T2 | ui 底座 + desktop Electron 壳 | T1 | 32k | Tailwind4 令牌底座;electron-vite 三进程壳 + 安全清单 |
 | T3 | RPC 分帧器 | T1 | 16k | pi-host `jsonl-framing.ts` + L1(覆盖率红线) |
 | T4 | RPC 客户端 | T3 | 32k | pi-host `rpc-client.ts`(关联/超时/分派)+ 单测 |
