@@ -1,4 +1,5 @@
 // 主进程入口(m1-design §7 安全基线)
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { registerIpcHandlers } from "./ipc.js";
@@ -64,8 +65,21 @@ function createWindow(): BrowserWindow {
 if (process.env.WSL_DISTRO_NAME) {
   app.commandLine.appendSwitch("disable-gpu");
   app.commandLine.appendSwitch("no-sandbox");
-  // /dev/shm 权限受限的 WSL 环境:共享内存改用 /tmp
-  app.commandLine.appendSwitch("disable-dev-shm-usage");
+  const wslgWaylandSocket = "/mnt/wslg/runtime-dir/wayland-0";
+  if (
+    process.platform === "linux" &&
+    existsSync(wslgWaylandSocket) &&
+    process.env.PIDESK_OZONE !== "x11"
+  ) {
+    // WSLg 下默认走 Wayland + IME:X11/XWayland 收不到 Windows 中文输入法
+    process.env.WAYLAND_DISPLAY ??= "wayland-0";
+    process.env.XDG_RUNTIME_DIR = "/mnt/wslg/runtime-dir";
+    app.commandLine.appendSwitch("ozone-platform", "wayland");
+    app.commandLine.appendSwitch("enable-wayland-ime");
+  } else {
+    // 旧 X11 退路:共享内存改用 /tmp
+    app.commandLine.appendSwitch("disable-dev-shm-usage");
+  }
 }
 
 // 生命周期:ready 后建窗口,再接线 IPC(T8a)
