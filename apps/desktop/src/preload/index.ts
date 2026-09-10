@@ -12,6 +12,7 @@ import {
   type ProcessStatePayload,
   type ProviderConfig,
   type ProviderProfile,
+  type McpServerConfig,
   type PushMap,
   type SessionEventPayload,
 } from "@pidesk/shared/ipc";
@@ -72,6 +73,12 @@ const bridge = {
     ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_SKILLS_SET_ENABLED, { id, enabled }),
   configSkillsRemove: (id: string) =>
     ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_SKILLS_REMOVE, { id }),
+  // ---- MCP(M2;preload 仅透传)----
+  configMcpList: () => ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_MCP_LIST, {}),
+  configMcpUpsert: (server: McpServerConfig) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_MCP_UPSERT, { server }),
+  configMcpRemove: (id: string) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_MCP_REMOVE, { id }),
   // ---- push 事件订阅 ----
   onSessionEvent: (cb: (payload: SessionEventPayload) => void) =>
     subscribe(PUSH_CHANNELS.SESSION_EVENT, cb),

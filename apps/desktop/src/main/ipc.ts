@@ -14,6 +14,7 @@ import {
   upsertProvider,
 } from "./config-center.js";
 import { importSkill, listSkills, removeSkill, setSkillEnabled } from "./skills-store.js";
+import { listMcpServers, removeMcpServer, upsertMcpServer } from "./mcp-store.js";
 
 /** ipcMain 最小结构(便于测试注入) */
 type IpcMainLike = Pick<IpcMain, "handle">;
@@ -112,4 +113,11 @@ export function registerIpcHandlers(
     setSkillEnabled(dataDir, id, enabled),
   );
   handle(ipc, INVOKE_CHANNELS.CONFIG_SKILLS_REMOVE, ({ id }) => removeSkill(dataDir, id));
+
+  // ---- MCP(M2;upsert/remove 后 store 内部已同步 pi-agent/mcp-generated.json)----
+  handle(ipc, INVOKE_CHANNELS.CONFIG_MCP_LIST, () => listMcpServers(dataDir));
+  handle(ipc, INVOKE_CHANNELS.CONFIG_MCP_UPSERT, ({ server }) =>
+    upsertMcpServer(dataDir, server),
+  );
+  handle(ipc, INVOKE_CHANNELS.CONFIG_MCP_REMOVE, ({ id }) => removeMcpServer(dataDir, id));
 }

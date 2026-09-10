@@ -27,7 +27,27 @@ export const INVOKE_CHANNELS = {
   CONFIG_SKILLS_IMPORT: "pidesk:config:skillsImport",
   CONFIG_SKILLS_SET_ENABLED: "pidesk:config:skillsSetEnabled",
   CONFIG_SKILLS_REMOVE: "pidesk:config:skillsRemove",
+  CONFIG_MCP_LIST: "pidesk:config:mcpList",
+  CONFIG_MCP_UPSERT: "pidesk:config:mcpUpsert",
+  CONFIG_MCP_REMOVE: "pidesk:config:mcpRemove",
 } as const;
+
+// ---------- MCP(M2) ----------
+
+export type McpTransport = "stdio" | "sse";
+
+export type McpServerConfig = {
+  id: string;
+  name: string;
+  transport: McpTransport;
+  /** stdio 必填 */
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  /** sse 必填 */
+  url?: string;
+  enabled: boolean;
+};
 
 // (C) push 通道:主进程单向推送
 export const PUSH_CHANNELS = {
@@ -155,6 +175,10 @@ export interface InvokeMap {
   ];
   [INVOKE_CHANNELS.CONFIG_SKILLS_SET_ENABLED]: [{ id: string; enabled: boolean }, SkillInfo[]];
   [INVOKE_CHANNELS.CONFIG_SKILLS_REMOVE]: [{ id: string }, SkillInfo[]];
+  // ---- MCP(M2) ----
+  [INVOKE_CHANNELS.CONFIG_MCP_LIST]: [Record<string, never>, McpServerConfig[]];
+  [INVOKE_CHANNELS.CONFIG_MCP_UPSERT]: [{ server: McpServerConfig }, McpServerConfig[]];
+  [INVOKE_CHANNELS.CONFIG_MCP_REMOVE]: [{ id: string }, McpServerConfig[]];
 }
 
 // ---------- (C) push:主进程 → 渲染进程 ----------
@@ -246,6 +270,14 @@ export interface PideskBridge {
   configSkillsRemove(
     id: string,
   ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_SKILLS_REMOVE"]>>;
+  // ---- MCP(M2) ----
+  configMcpList(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_MCP_LIST"]>>;
+  configMcpUpsert(
+    server: InvokeReq<(typeof INVOKE_CHANNELS)["CONFIG_MCP_UPSERT"]>["server"],
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_MCP_UPSERT"]>>;
+  configMcpRemove(
+    id: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_MCP_REMOVE"]>>;
   // ---- push 事件订阅:收主进程定向推送,返回取消函数 ----
   onSessionEvent(
     cb: (payload: PushMap[(typeof PUSH_CHANNELS)["SESSION_EVENT"]]) => void,
