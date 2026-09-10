@@ -68,7 +68,7 @@ export type SessionViewProps = {
 
 /**
  * SessionView(T10b)—— 会话主区:标签栏 + 消息流 + 输入区。
- * 空态(无会话)显示居中引导文案与「新建会话」按钮,不放假插画。
+ * 空态(无会话)为 Wegent DesktopEmptyTaskLauncher 式引导:居中大标题 + 直接可发起首条会话的 Composer。
  * 用户消息由本层本地维护(store 只承载助手流式消息,见 T10a message_start 分支),
  * 渲染时按发送时刻的助手消息条数锚点插回原位。
  */
@@ -124,6 +124,40 @@ export function SessionView({ actions }: SessionViewProps) {
     void bridge?.sessionPrompt(sessionId, text);
   };
 
+  /** 空态首条消息:建会话 → 入 store 并激活 → 回填本地用户消息 → 下发首条 prompt */
+  const handleEmptySend = (text: string) => {
+    if (!bridge) return;
+    void bridge.sessionCreate().then(({ sessionId }) => {
+      dispatch({ type: "SESSION_CREATED", id: sessionId });
+      setActiveId(sessionId);
+      const message: MessageView = {
+        id: `${sessionId}#u${seqRef.current++}`,
+        role: "user",
+        text,
+      };
+      setUserMessages((prev) => ({
+        ...prev,
+        [sessionId]: [...(prev[sessionId] ?? []), { at: 0, message }],
+      }));
+      if (bridge.sessionGetState) {
+        void bridge
+          .sessionGetState(sessionId)
+          .then((state) => {
+            setModelViews((prev) => ({
+              ...prev,
+              [sessionId]: {
+                provider: state.model?.provider ?? DEFAULT_MODEL_VIEW.provider,
+                modelId: state.model?.id ?? DEFAULT_MODEL_VIEW.modelId,
+                thinkingLevel: state.thinkingLevel ?? DEFAULT_MODEL_VIEW.thinkingLevel,
+              },
+            }));
+          })
+          .catch(() => {});
+      }
+      void bridge.sessionPrompt(sessionId, text);
+    });
+  };
+
   /** 模型/档位:先本地回显,再经桥下发 */
   const handleSetModel = (sessionId: string, provider: string, modelId: string) => {
     setModelViews((prev) => ({
@@ -165,22 +199,22 @@ export function SessionView({ actions }: SessionViewProps) {
     void bridge?.sessionAbort(sessionId);
   };
 
-  // 空态:无任何会话
+  // 空态:无任何会话,Wegent DesktopEmptyTaskLauncher 式引导 + 直接可输入的 Composer
   if (sessions.length === 0) {
     return (
-      <div
+      <section
         data-testid="session-empty"
-        className="flex h-full flex-col items-center justify-center gap-4"
+        className="flex min-h-0 min-w-0 flex-1 flex-col px-6 pb-2 pt-8"
       >
-        <p className="text-[14px] text-[var(--text-2)]">输入指令,开始与 pi 对话</p>
-        <button
-          type="button"
-          onClick={handleCreate}
-          className="cursor-pointer rounded-full bg-[var(--surface-hover)] px-3 py-1 text-[14px] text-[var(--text-0)] hover:bg-[var(--surface-active)]"
-        >
-          新建会话
-        </button>
-      </div>
+        <div className="flex min-h-0 flex-1 items-center justify-center pb-8">
+          <h1 className="max-w-full text-center text-[28px] font-normal leading-9 tracking-normal text-[var(--text-0)]">
+            我们该做什么？
+          </h1>
+        </div>
+        <div className="mx-auto w-[min(46rem,calc(100%-2rem))] min-w-0 shrink-0">
+          <Composer sending={false} placeholder="随心输入" onSend={handleEmptySend} onAbort={() => {}} />
+        </div>
+      </section>
     );
   }
 

@@ -19,16 +19,19 @@ const NAV_ITEMS = [
  * NavShell —— 应用壳布局:左 300px 导航栏(bg-0)+ 主工作区(bg-1),
  * 两者以 1px hairline 分隔。全部用 CSS 变量令牌,无硬编码色值。
  *
- * 密度对齐 Wegent DESIGN §5.3/§6.3:侧栏默认宽 300px;导航行高 30px、
- * 圆角 10px(--radius-row)、水平内边距 8px、图标 16px、文本 14px(--text-base)、
- * 字重 --font-weight-ui;hover/激活用中性表面叠加(--surface-hover/--surface-active),
- * 激活项保留 focus 蓝 2px 左窄条。
+ * 密度对齐 Wegent DesktopSidebar:导航行高 30px、圆角 10px、水平内边距 8px、
+ * 图标 16px、文本 14px;激活项用中性表面叠加(--surface-active)+ text-0,
+ * 禁用项 text-1;无 hover 效果(鼠标移入不改变样式)。
  */
 export function NavShell({ children, onOpenSettings }: NavShellProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-1)]">
       {/* 左侧导航栏:固定 300px(§5.3 默认宽),bg-0,右缘 1px hairline */}
-      <nav className="flex w-[300px] shrink-0 flex-col gap-[2px] border-r border-[var(--hairline)] bg-[var(--bg-0)] px-2 py-3">
+      <nav className="relative flex h-full w-[300px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] px-1.5 pt-1.5">
+        {/* 产品标题区 */}
+        <div className="mb-1 flex h-9 shrink-0 items-center justify-between px-2">
+          <span className="min-w-0 truncate text-[18px] font-semibold leading-6 text-[var(--text-0)]">pidesk</span>
+        </div>
         {NAV_ITEMS.map(({ key, label, Icon, active }) => {
           // 配置项:传入 onOpenSettings 时启用(T11b),其余项维持原激活/禁用逻辑
           const enabled = key === "settings" ? Boolean(onOpenSettings) : active;
@@ -41,27 +44,18 @@ export function NavShell({ children, onOpenSettings }: NavShellProps) {
               aria-current={active ? "page" : undefined}
               onClick={settingsEnabled ? onOpenSettings : undefined}
               className={
-                // 行高 30px、圆角 10px、水平内边距 8px、图标-文字间距 6px、文本 14px、字重 --font-weight-ui(fallback normal)
-                // 激活态:focus 蓝 2px 左侧窄条 + --surface-active 中性表面 + text-0;
-                // 启用配置项同为 text-0,hover 用 --surface-hover;禁用态:text-1 色
-                "flex h-[30px] w-full items-center gap-[6px] rounded-[var(--radius-row)] px-2 text-left text-[length:var(--text-base)] leading-[var(--lh-base)] font-[var(--font-weight-ui,normal)] " +
+                // 行高 30px、圆角 10px、水平内边距 8px、图标-文字间距 6px、文本 14px
+                // 激活/启用配置项:text-0;禁用态:text-1 色;无 hover
+                "flex h-[30px] w-full items-center gap-2 rounded-[10px] px-2 text-left text-[14px] leading-5 " +
                 (active
-                  ? "cursor-pointer border-l-2 border-[var(--focus)] bg-[var(--surface-active)] text-[var(--text-0)]"
+                  ? "cursor-pointer bg-[var(--surface-active)] text-[var(--text-0)]"
                   : settingsEnabled
-                    ? "cursor-pointer border-l-2 border-transparent text-[var(--text-0)] hover:bg-[var(--surface-hover)]"
-                    : "cursor-default border-l-2 border-transparent text-[var(--text-1)]")
+                    ? "cursor-pointer bg-transparent text-[var(--text-0)]"
+                    : "cursor-default bg-transparent text-[var(--text-1)]")
               }
             >
-              {/* 图标 16px,禁用态继承父级 text-1 色,激活/启用态用 text-0 */}
-              <Icon
-                size={16}
-                strokeWidth={1.5}
-                className={
-                  active || settingsEnabled
-                    ? "text-[var(--text-0)]"
-                    : "text-[var(--text-1)]"
-                }
-              />
+              {/* 图标 16px,继承父级文字色 */}
+              <Icon size={16} strokeWidth={1.5} className="text-current" />
               <span>{label}</span>
             </button>
           );
@@ -69,7 +63,7 @@ export function NavShell({ children, onOpenSettings }: NavShellProps) {
       </nav>
 
       {/* 主工作区:占满剩余空间,bg-1 */}
-      <main className="min-w-0 flex-1 bg-[var(--bg-1)]">{children}</main>
+      <main className="flex min-w-0 flex-1 flex-col bg-[var(--bg-1)]">{children}</main>
     </div>
   );
 }

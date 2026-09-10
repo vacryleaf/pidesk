@@ -53,7 +53,7 @@ function MarkdownBody({ text }: { text: string }) {
 }
 
 /**
- * MessageList —— 流式消息列表容器:滚动通栏,内部消息列居中 48rem(20px gutter)。
+ * MessageList —— 流式消息列表容器:滚动通栏,内部消息列居中 max-w-3xl + flex-col gap-4。
  * 流式优化:text_delta 即 props.messages 高频变化,经 rAF(16ms)批量 flush 进 state,
  * 同一帧内多次增量只触发一次重渲;卸载时 cancelAnimationFrame 兜底。
  * 末条消息自动滚底,仅当滚动容器已在底部附近,避免打断用户回看。
@@ -103,9 +103,9 @@ export function MessageList({ messages }: { messages: MessageView[] }) {
   }, [flushed]);
 
   return (
-    <div ref={containerRef} data-testid="message-list" className="overflow-y-auto">
+    <div ref={containerRef} data-testid="message-list" className="h-full overflow-y-auto">
       {/* 滚动容器通栏;内部消息列居中 48rem + 20px gutter(Wegent §5.1/5.5) */}
-      <div className="mx-auto w-full max-w-[48rem] px-5">
+      <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-4 px-6 pb-2 pt-8">
         {flushed.map((m) => (
           <MessageItem key={m.id} role={m.role} tokens={m.tokens}>
             {/* assistant 且 thinking 非空 → 折叠思考块 */}

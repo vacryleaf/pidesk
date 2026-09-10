@@ -144,6 +144,6 @@ describe("MessageItem", () => {
     const article = container.querySelector("article");
     expect(article?.className).toContain("justify-end");
     const bubble = article?.querySelector("div[class*='rounded-[16px]']");
-    expect(bubble?.className).toContain("bg-[var(--bg-2)]");
+    expect(bubble?.className).toContain("bg-[var(--bg-3)]");
   });
 });

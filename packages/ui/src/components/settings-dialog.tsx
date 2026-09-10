@@ -171,7 +171,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 type="button"
                 aria-label="关闭"
                 onClick={onClose}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] text-[var(--text-1)] hover:opacity-80 hover:text-[var(--text-0)]"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] text-[var(--text-1)]"
               >
                 <X size={16} strokeWidth={1.5} />
               </button>
@@ -232,7 +232,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 data-testid="settings-apikey-toggle"
                 aria-label={showKey ? "隐藏 API Key" : "显示 API Key"}
                 onClick={() => setShowKey((v) => !v)}
-                className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center text-[var(--text-1)] hover:text-[var(--text-0)]"
+                className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center text-[var(--text-1)]"
               >
                 {showKey ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
               </button>
@@ -266,7 +266,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 type="button"
                 data-testid="settings-cancel"
                 onClick={onClose}
-                className="h-8 cursor-pointer rounded-[8px] bg-[var(--bg-3)] px-3 text-[14px] text-[var(--text-0)] hover:opacity-80"
+                className="h-8 cursor-pointer rounded-[8px] bg-[var(--bg-3)] px-3 text-[14px] text-[var(--text-0)]"
               >
                 取消
               </button>
@@ -275,7 +275,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 data-testid="settings-save"
                 disabled={saving}
                 onClick={handleSave}
-                className="h-8 cursor-pointer rounded-[8px] bg-[var(--text-0)] px-3 text-[14px] text-[var(--bg-1)] hover:opacity-80 disabled:opacity-50"
+                className="h-8 cursor-pointer rounded-[8px] bg-[var(--text-0)] px-3 text-[14px] text-[var(--bg-1)] disabled:opacity-50"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

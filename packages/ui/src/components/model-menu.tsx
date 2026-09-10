@@ -121,11 +121,17 @@ export function ModelMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-7 cursor-pointer items-center gap-1 px-1 text-[13px] text-[var(--text-1)] hover:text-[var(--text-0)]"
+        className="flex h-7 cursor-pointer items-center gap-1 px-1 text-[13px] text-[var(--text-1)]"
       >
-        <span>{curProvider}/</span>
-        <span className="font-mono">{curModelId}</span>
-        <span>:{thinkingLevel}</span>
+        {curProvider && curModelId && curProvider !== "unknown" && curModelId !== "unknown" ? (
+          <>
+            <span>{curProvider}/</span>
+            <span className="font-mono">{curModelId}</span>
+            <span>:{thinkingLevel}</span>
+          </>
+        ) : (
+          <span>选择模型</span>
+        )}
       </button>
 
       {open && (
@@ -158,7 +164,7 @@ export function ModelMenu({
                         onClick={() => handleSelectModel(m)}
                         className={
                           "flex w-full cursor-pointer items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
-                          (active ? "bg-[var(--bg-3)]" : "hover:bg-[var(--surface-hover)]")
+                          (active ? "bg-[var(--bg-3)]" : "")
                         }
                       >
                         <span className="flex-1 truncate text-[14px] text-[var(--text-0)]">
@@ -198,7 +204,7 @@ export function ModelMenu({
                         }}
                         className={
                           "flex w-full cursor-pointer items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
-                          (active ? "bg-[var(--bg-3)]" : "hover:bg-[var(--surface-hover)]")
+                          (active ? "bg-[var(--bg-3)]" : "")
                         }
                       >
                         <span className="font-mono text-[14px] text-[var(--text-0)]">{lv}</span>
