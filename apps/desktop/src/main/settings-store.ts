@@ -2,7 +2,7 @@
 // - models.json:<dataDir>/pi-agent/models.json,结构
 //     { "providers": { "<preset>": { "name","api":"openai-completions","baseUrl","models":[{"id","name"}] } } }
 //   preset 仅 "ollama"(baseUrl http://localhost:11434/v1)或 "custom-openai"(用户 baseUrl);M1 单连接,整文件只存当前 preset。
-// - auth.json:仅当 saveKey=true 时写 <dataDir>/pi-agent/auth.json,结构 { "<preset>": { "apiKey": "sk-…" } };
+// - auth.json:仅当 saveKey=true 时写 <dataDir>/pi-agent/auth.json,结构 { "<preset>": { "type":"api_key", "key":"sk-…" } };
 //   saveKey=false 不写 auth(仅本会话环境变量语义,M1 先不注入 env,TODO:M2 接 env 注入)。
 // - 原子写(tmp+rename,模式同 pi-host env.ts bootstrapDataDir);读取容错(文件不存在/损坏 → 返回默认配置)。
 
@@ -27,6 +27,8 @@ interface ProviderEntry {
   baseUrl: string;
   /** 模型列表(单连接仅当前选中模型) */
   models: Array<{ id: string; name: string }>;
+  /** 占位鉴权(本地无鉴权 provider 如 Ollama 需要,否则模型不出现在可用列表) */
+  apiKey?: string;
 }
 
 /** models.json 顶层结构 */
@@ -34,9 +36,9 @@ interface ModelsFile {
   providers: Record<string, ProviderEntry>;
 }
 
-/** auth.json 顶层结构:preset → 凭据 */
+/** auth.json 顶层结构:preset → 凭据(新规范 { type:"api_key", key },旧形态 { apiKey }) */
 interface AuthFile {
-  [preset: string]: { apiKey: string } | undefined;
+  [preset: string]: { type?: string; key?: string; apiKey?: string } | undefined;
 }
 
 /** preset → 显示名(models.json name 字段) */
@@ -101,9 +103,18 @@ export function loadProviderConfig(dataDir: string): ProviderConfig {
 
   // auth.json 还原已保存凭据(缺失/损坏 → 视为未保存)
   const authRaw = readJsonSafe(join(agentDir(dataDir), "auth.json"));
-  const apiKey = authRaw && typeof authRaw === "object"
-    ? (authRaw as AuthFile)[preset]?.apiKey
-    : undefined;
+  let apiKey: string | undefined;
+  if (authRaw && typeof authRaw === "object") {
+    const credential = (authRaw as AuthFile)[preset];
+    if (credential && typeof credential === "object") {
+      // 新规范:{ type:"api_key", key:"…" };旧形态:{ apiKey:"…" }
+      if (credential.type === "api_key" && typeof credential.key === "string") {
+        apiKey = credential.key;
+      } else if (typeof credential.apiKey === "string") {
+        apiKey = credential.apiKey;
+      }
+    }
+  }
 
   return {
     preset,
@@ -129,6 +140,7 @@ export function saveProviderConfig(dataDir: string, config: ProviderConfig): voi
         api: "openai-completions",
         baseUrl: config.baseUrl,
         models: config.modelId ? [{ id: config.modelId, name: config.modelId }] : [],
+        ...(config.preset === "ollama" ? { apiKey: "ollama" } : {}),
       },
     },
   };
@@ -137,9 +149,9 @@ export function saveProviderConfig(dataDir: string, config: ProviderConfig): voi
   // auth.json:仅在用户勾选保存时落盘凭据
   if (config.saveKey && config.apiKey) {
     const authRaw = readJsonSafe(join(agentDir(dataDir), "auth.json"));
-    const auth: Record<string, { apiKey: string }> =
-      authRaw && typeof authRaw === "object" ? (authRaw as Record<string, { apiKey: string }>) : {};
-    auth[config.preset] = { apiKey: config.apiKey };
+    const auth: AuthFile =
+      authRaw && typeof authRaw === "object" ? (authRaw as AuthFile) : {};
+    auth[config.preset] = { type: "api_key", key: config.apiKey };
     atomicWrite(join(agentDir(dataDir), "auth.json"), JSON.stringify(auth, null, 2) + "\n");
   }
 }
