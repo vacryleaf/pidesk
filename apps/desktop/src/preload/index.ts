@@ -12,7 +12,7 @@ import {
   type ProviderConfig,
   type PushMap,
   type SessionEventPayload,
-} from "@pidesk/shared";
+} from "@pidesk/shared/ipc";
 
 // push 事件订阅:收主进程定向推送,返回取消函数
 function subscribe<C extends keyof PushMap>(

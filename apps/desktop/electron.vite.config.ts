@@ -9,7 +9,13 @@ export default defineConfig({
     build: { rollupOptions: { external: [/^electron$/, /^node:/] } },
   },
   preload: {
-    build: { rollupOptions: { external: [/^electron$/, /^node:/] } },
+    build: {
+      rollupOptions: {
+        external: [/^electron$/, /^node:/],
+        // 沙箱模式(sandbox:true)的 preload 必须为 CommonJS
+        output: { format: "cjs", entryFileNames: "[name].js" },
+      },
+    },
   },
   renderer: {
     plugins: [react()],
