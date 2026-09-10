@@ -32,6 +32,15 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
+// WSL/无 GPU 环境:禁用 GPU 加速与浏览器级沙箱(Chromium 需 setuid helper),
+// 仅 WSL 生效(WSL_DISTRO_NAME 由 WSL 自动注入);Windows 生产态不受影响
+if (process.env.WSL_DISTRO_NAME) {
+  app.commandLine.appendSwitch("disable-gpu");
+  app.commandLine.appendSwitch("no-sandbox");
+  // /dev/shm 权限受限的 WSL 环境:共享内存改用 /tmp
+  app.commandLine.appendSwitch("disable-dev-shm-usage");
+}
+
 // 生命周期:ready 后建窗口,再接线 IPC(T8a)
 app.whenReady().then(() => {
   const win = createWindow();
