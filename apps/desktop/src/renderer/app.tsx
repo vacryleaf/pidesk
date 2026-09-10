@@ -1,4 +1,10 @@
-// 占位根组件(T2c 替换为导航壳)
+// 渲染进程根组件(T2c):导航壳 + 会话占位页;会话主区 T10b 换真
+import { NavShell, Placeholder } from "@pidesk/ui";
+
 export default function App() {
-  return <div>pidesk</div>;
+  return (
+    <NavShell>
+      <Placeholder title="会话" />
+    </NavShell>
+  );
 }
