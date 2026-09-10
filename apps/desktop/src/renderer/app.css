@@ -2,3 +2,15 @@
 @import "tailwindcss";
 @import "@pidesk/ui/styles.css";
 @source "../../../packages/ui/src";
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-weight: var(--font-weight-ui, 445);
+  color: var(--text-0);
+  background: var(--bg-1);
+}
+
+#root {
+  min-height: 100vh;
+}

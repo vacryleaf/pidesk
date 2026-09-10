@@ -55,7 +55,7 @@ export function ToolRow({
   }
 
   return (
-    <div className="rounded-[8px] border-t border-[var(--hairline)] px-2 py-1">
+    <div className="mt-1 px-2 py-1">
       {/* 折叠行主体:图标 + 工具名 + 参数预览 + 右侧状态 */}
       <div className="flex items-center gap-2">
         <Wrench size={16} strokeWidth={1.5} className="shrink-0 text-[var(--text-1)]" />

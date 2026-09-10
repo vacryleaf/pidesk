@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Composer } from "./composer";
+import { ModelMenu, type ModelInfo } from "./model-menu";
 import { MessageList, type MessageView } from "./message-list";
 import { SessionTabs } from "./session-tabs";
 import { useSessions } from "../state/store-context";
@@ -10,7 +11,17 @@ export type SessionActionBridge = {
   sessionCreate(): Promise<{ sessionId: string }>;
   sessionPrompt(sessionId: string, message: string): Promise<unknown>;
   sessionAbort(sessionId: string): Promise<unknown>;
+  sessionGetState?(sessionId: string): Promise<{
+    model?: { id?: string; provider?: string };
+    thinkingLevel?: string;
+  }>;
+  sessionListModels?(sessionId: string): Promise<{ models: ModelInfo[] }>;
+  sessionSetModel?(sessionId: string, provider: string, modelId: string): Promise<unknown>;
+  sessionSetThinkingLevel?(sessionId: string, level: string): Promise<unknown>;
 };
+
+type ModelView = { provider: string; modelId: string; thinkingLevel: string };
+const DEFAULT_MODEL_VIEW: ModelView = { provider: "ollama", modelId: "选择模型", thinkingLevel: "off" };
 
 /** 取动作桥:显式入参优先,否则读 window.pidesk(非 Electron / 测试环境返回 undefined) */
 function resolveActionBridge(explicit?: SessionActionBridge): SessionActionBridge | undefined {
@@ -66,11 +77,13 @@ export function SessionView({ actions }: SessionViewProps) {
   const bridge = resolveActionBridge(actions);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [userMessages, setUserMessages] = useState<Record<string, UserInsert[]>>({});
+  const [modelViews, setModelViews] = useState<Record<string, ModelView>>({});
   // 本地用户消息序号:避免同一毫秒内多次发送产生重复 id
   const seqRef = useRef(0);
 
   // 激活会话:activeId 失效(被关闭)时回退到首个会话
   const active = sessions.find((session) => session.id === activeId) ?? sessions[0] ?? null;
+  const activeModelView = active?.id ? modelViews[active.id] ?? DEFAULT_MODEL_VIEW : DEFAULT_MODEL_VIEW;
 
   /** 新建:先经桥建会话,拿到 sessionId 再入 store 并激活 */
   const handleCreate = () => {
@@ -78,6 +91,21 @@ export function SessionView({ actions }: SessionViewProps) {
     void bridge.sessionCreate().then(({ sessionId }) => {
       dispatch({ type: "SESSION_CREATED", id: sessionId });
       setActiveId(sessionId);
+      if (bridge.sessionGetState) {
+        void bridge
+          .sessionGetState(sessionId)
+          .then((state) => {
+            setModelViews((prev) => ({
+              ...prev,
+              [sessionId]: {
+                provider: state.model?.provider ?? DEFAULT_MODEL_VIEW.provider,
+                modelId: state.model?.id ?? DEFAULT_MODEL_VIEW.modelId,
+                thinkingLevel: state.thinkingLevel ?? DEFAULT_MODEL_VIEW.thinkingLevel,
+              },
+            }));
+          })
+          .catch(() => {});
+      }
     });
   };
 
@@ -95,6 +123,30 @@ export function SessionView({ actions }: SessionViewProps) {
     }));
     void bridge?.sessionPrompt(sessionId, text);
   };
+
+  /** 模型/档位:先本地回显,再经桥下发 */
+  const handleSetModel = (sessionId: string, provider: string, modelId: string) => {
+    setModelViews((prev) => ({
+      ...prev,
+      [sessionId]: { ...(prev[sessionId] ?? DEFAULT_MODEL_VIEW), provider, modelId },
+    }));
+    void bridge?.sessionSetModel?.(sessionId, provider, modelId);
+  };
+
+  const handleSetThinkingLevel = (sessionId: string, level: string) => {
+    setModelViews((prev) => ({
+      ...prev,
+      [sessionId]: { ...(prev[sessionId] ?? DEFAULT_MODEL_VIEW), thinkingLevel: level },
+    }));
+    void bridge?.sessionSetThinkingLevel?.(sessionId, level);
+  };
+
+  const listModelsFor = useCallback(
+    (sessionId: string): Promise<ModelInfo[]> =>
+      bridge?.sessionListModels ? bridge.sessionListModels(sessionId).then((r) => r.models) : Promise.resolve([]),
+    [bridge],
+  );
+  const listModelsActive = useCallback(() => listModelsFor(active?.id ?? ""), [active?.id, listModelsFor]);
 
   /** 中止:仅下发 sessionAbort,发送态复位由 agent_settled 事件驱动 */
   const handleAbort = (sessionId: string) => {
@@ -120,11 +172,11 @@ export function SessionView({ actions }: SessionViewProps) {
         data-testid="session-empty"
         className="flex h-full flex-col items-center justify-center gap-4"
       >
-        <p className="text-[13px] text-[var(--text-1)]">输入指令,开始与 pi 对话</p>
+        <p className="text-[14px] text-[var(--text-2)]">输入指令,开始与 pi 对话</p>
         <button
           type="button"
           onClick={handleCreate}
-          className="cursor-pointer border border-[var(--hairline)] px-3 py-1 text-[13px] text-[var(--text-0)]"
+          className="cursor-pointer rounded-full bg-[var(--surface-hover)] px-3 py-1 text-[14px] text-[var(--text-0)] hover:bg-[var(--surface-active)]"
         >
           新建会话
         </button>
@@ -157,6 +209,16 @@ export function SessionView({ actions }: SessionViewProps) {
                 queueCounts={active.queueCounts}
                 onSend={(text) => handleSend(active.id, text)}
                 onAbort={() => handleAbort(active.id)}
+                footerLeft={
+                  <ModelMenu
+                    provider={activeModelView.provider}
+                    modelId={activeModelView.modelId}
+                    thinkingLevel={activeModelView.thinkingLevel}
+                    onSetModel={(p, m) => handleSetModel(active.id, p, m)}
+                    onSetThinkingLevel={(lv) => handleSetThinkingLevel(active.id, lv)}
+                    listModels={listModelsActive}
+                  />
+                }
               />
             </div>
           </div>

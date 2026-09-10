@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUp, Square } from "lucide-react";
 
 /** Composer props:sending 发送中(按钮变中止、Enter 禁发);queueCounts 队列计数(仅 >0 显示) */
 export type ComposerProps = {
   sending: boolean;
   queueCounts?: { steering: number; followUp: number };
+  footerLeft?: ReactNode;
   onSend(text: string): void;
   onAbort(): void;
 };
@@ -20,7 +21,7 @@ const TEXTAREA_MAX_H = LINE_HEIGHT * MAX_LINES;
  * 视觉对齐 Wegent §6.2:20px 圆角 elevated 表面(90% 不透明 + 轻模糊)+ prominent 阴影,
  * 普通态不加可见边,发送按钮中性灰圆钮不用绿色;队列提示 12px text-2。
  */
-export function Composer({ sending, queueCounts, onSend, onAbort }: ComposerProps) {
+export function Composer({ sending, queueCounts, footerLeft, onSend, onAbort }: ComposerProps) {
   const [value, setValue] = useState("");
   const taRef = useRef<HTMLTextAreaElement>(null);
 
@@ -55,30 +56,34 @@ export function Composer({ sending, queueCounts, onSend, onAbort }: ComposerProp
   return (
     <div className="flex flex-col gap-1">
       {/* 输入表面:elevated 90% 表面 + 轻模糊 + prominent 阴影,20px 圆角,普通态无边 */}
-      <div className="flex items-end gap-2 rounded-[var(--radius-composer)] bg-[color-mix(in_srgb,var(--bg-2)_90%,transparent)] p-2 backdrop-blur-sm shadow-[var(--shadow-prominent)]">
+      <div className="flex flex-col rounded-[var(--radius-composer)] bg-[color-mix(in_srgb,var(--bg-2)_90%,transparent)] p-2 backdrop-blur-sm shadow-[var(--shadow-prominent)]">
         <textarea
           ref={taRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           rows={2}
-          placeholder="随心输入"
+          placeholder="要求后续变更"
           style={{ lineHeight: `${LINE_HEIGHT}px`, maxHeight: TEXTAREA_MAX_H }}
-          className="min-h-[42px] flex-1 resize-none bg-transparent px-3 text-[14px] text-[var(--text-0)] outline-none placeholder:text-[var(--text-1)]"
+          className="min-h-[42px] w-full resize-none bg-transparent px-3 text-[14px] text-[var(--text-0)] outline-none placeholder:text-[var(--text-1)]"
         />
-        <button
-          type="button"
-          aria-label={sending ? "中止" : "发送"}
-          onClick={() => (sending ? onAbort() : trySend())}
-          className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--surface-active)] text-[var(--text-0)]"
-        >
-          {/* sending 时切 ⏹(Square),否则 ↑(ArrowUp) */}
-          {sending ? (
-            <Square size={14} strokeWidth={1.5} className="text-[var(--text-0)]" />
-          ) : (
-            <ArrowUp size={14} strokeWidth={1.5} className="text-[var(--text-0)]" />
-          )}
-        </button>
+        {/* 底栏:左侧插槽(如 ModelMenu)+ 右侧发送/中止按钮 */}
+        <div className="mt-1 flex items-center justify-between gap-2 px-1">
+          <div className="min-w-0">{footerLeft}</div>
+          <button
+            type="button"
+            aria-label={sending ? "中止" : "发送"}
+            onClick={() => (sending ? onAbort() : trySend())}
+            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--surface-active)] text-[var(--text-0)]"
+          >
+            {/* sending 时切 ⏹(Square),否则 ↑(ArrowUp) */}
+            {sending ? (
+              <Square size={14} strokeWidth={1.5} className="text-[var(--text-0)]" />
+            ) : (
+              <ArrowUp size={14} strokeWidth={1.5} className="text-[var(--text-0)]" />
+            )}
+          </button>
+        </div>
       </div>
       {/* 队列计数提示:12px text-2,仅 >0 显示 */}
       {showQueue && (

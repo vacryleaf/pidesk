@@ -43,6 +43,7 @@
   /* ——— 字体栈 ——— */
   --font-code: "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
     monospace; /* 仅用于代码 / 命令 / 路径 / token 计数 */
+  --font-ui: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; /* 系统 UI 栈(§3.2) */
 
   /* ——— 字重(§3.2:主 UI 字重 445,强调/标题 500)——— */
   --font-weight-ui: 445;

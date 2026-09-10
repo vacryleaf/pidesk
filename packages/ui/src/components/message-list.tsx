@@ -38,10 +38,10 @@ function MarkdownBody({ text }: { text: string }) {
       components={{
         p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
         code: ({ children }) => (
-          <code className="rounded-none bg-[var(--bg-2)] px-1 font-mono text-[12px]">{children}</code>
+          <code className="rounded-[var(--radius-sm)] bg-[var(--bg-2)] px-1 font-mono text-[12px]">{children}</code>
         ),
         pre: ({ children }) => (
-          <pre className="overflow-x-auto rounded-none bg-[var(--bg-2)] p-2 font-mono text-[12px] leading-[1.5]">
+          <pre className="overflow-x-auto rounded-[var(--radius-ctl)] bg-[var(--bg-2)] p-2 font-mono text-[12px] leading-[1.5]">
             {children}
           </pre>
         ),

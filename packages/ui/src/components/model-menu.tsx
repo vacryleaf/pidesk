@@ -132,7 +132,7 @@ export function ModelMenu({
         <div
           data-testid="model-menu-popover"
           role="menu"
-          className="absolute bottom-full left-0 z-40 mb-1 w-[280px] rounded-[var(--radius-menu)] bg-[var(--bg-1)] p-1 shadow-[var(--shadow-lg)] ring-1 ring-[var(--ring)]"
+          className="absolute bottom-full left-0 z-40 mb-1 w-[280px] rounded-[var(--radius-menu)] bg-[var(--bg-1)] p-1 shadow-[var(--shadow-lg)] ring-[0.5px] ring-[var(--ring)]"
         >
           {models.length === 0 ? (
             // 空态 / 拉取失败:同一位置给出可操作提示
