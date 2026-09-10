@@ -2,6 +2,7 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
+import { resolveDataDir } from "@pidesk/shared";
 import { registerIpcHandlers } from "./ipc.js";
 import { PiHostManager } from "./pi-host-manager.js";
 
@@ -86,7 +87,9 @@ if (process.env.WSL_DISTRO_NAME) {
 // 生命周期:ready 后建窗口,再接线 IPC(T8a)
 app.whenReady().then(() => {
   const win = createWindow();
-  const manager = new PiHostManager();
+  // 对齐 m1-design §5:打包态 userData,开发态 .pidesk-dev
+  const dataDir = app.isPackaged ? app.getPath("userData") : resolveDataDir(process.env);
+  const manager = new PiHostManager(dataDir);
   registerIpcHandlers(ipcMain, manager, win);
 });
 
