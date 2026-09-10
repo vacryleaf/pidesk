@@ -265,4 +265,4 @@ userData/
 1. ~~产品定名（现占位 `pidesk`）与仓库位置。~~ → **已裁决 T9**（2026-09-10：定名 pidesk，仓库 github.com/vacryleaf/pidesk）
 2. ~~默认 bundled 模型档位与预置 provider 清单（涉及中转 baseUrl 预设是否内置）。~~ → **已裁决 T7**（2026-09-10）
 3. ~~M1 是否顺带把 clash 代理集成纳入（vtools 有现成经验；建议 M2 再议）。~~ → **已裁决 T8**（2026-09-10：延后 M2）
-4. 是否接受 M1-M3 macOS 产物 unsigned。
+4. ~~是否接受 M1-M3 macOS 产物 unsigned。~~ → **已关闭**(2026-09-10:被 P3 吸收——macOS 产物延后 M5,与签名/公证议题合并处理)

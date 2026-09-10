@@ -12,7 +12,7 @@
 3. **IPC 契约一次定死**(§5):invoke 通道 8 条 + push 通道 2 条,全部 `pidesk:` 前缀、shared 类型载荷、preload 白名单暴露。
 4. **provider 最小配置划界**(§6):M1 设置页 = 单连接表单(Ollama 预置 + 自定义 baseUrl/key)→ 写隔离目录 models.json/auth.json;多 provider 管理是 M2。
 5. **隔离验收三用例可执行化**(§8),M1 出口连同 Windows 实测清单进验收包。
-6. **待裁决 2 项**:§10(M1 是否支持多连接配置;dev 数据目录默认值)。
+6. **§10 两项已裁决**(2026-09-10 环节一):M1 单连接;dev 数据目录默认 `<仓库根>/.pidesk-dev`(`PIDESK_DATA_DIR` 可覆盖)。
 
 ---
 
@@ -71,7 +71,7 @@ HTTP_PROXY / HTTPS_PROXY    = 预留空值(T8)
 PIDESK_HOST                 = 1                            # 宿主标记(T1 沿革)
 ```
 
-`<dataDir>` 解析:打包态 `app.getPath('userData')`;**开发态默认 `~/.pidesk-dev`**(可用 `PIDESK_DATA_DIR` 覆盖)——避免开发期污染打包态数据,也让隔离验收在 dev 环境可重复。
+`<dataDir>` 解析:打包态 `app.getPath('userData')`;**开发态默认 `<仓库根>/.pidesk-dev`**(即 `/home/harry/pidesk/.pidesk-dev`,可用 `PIDESK_DATA_DIR` 覆盖;2026-09-10 用户裁决)——避免开发期污染打包态数据,也让隔离验收在 dev 环境可重复;脚手架任务卡须将其加入 .gitignore。
 
 隔离目录 bootstrap(M1 最小 settings,M2 config-center 全量接管):
 
@@ -139,10 +139,12 @@ contextIsolation:true;nodeIntegration:false;sandbox:renderer 开启;webSecurity 
 4. Windows 10+ 真机安装包可用,单会话对话 + A1/A4 抽查(用户实测清单);
 5. UI 对照 ui-prototype §5.1 走查 + 可用性红线(dev-process §4.1)。
 
-## 10. 开放问题(环节一裁决点)
+## 10. 裁决记录(环节一,2026-09-10 用户裁决)
 
-1. **provider 配置**:M1 只支持"单连接"(同一时刻一个生效配置),还是"多套保存+单激活"?推荐**单连接**(最小化,M2 再扩展),少一半表单复杂度。
-2. **dev 数据目录**默认 `~/.pidesk-dev`(`PIDESK_DATA_DIR` 可覆盖)是否接受?(隔离验收与日常开发共用一处,清理直观)
+1. **provider 配置**:M1 只做**单连接**(同一时刻一个生效配置);多套保存+单激活延后 M2。
+2. **dev 数据目录**:默认 `<仓库根>/.pidesk-dev`(`PIDESK_DATA_DIR` 可覆盖;随仓库 .gitignore 排除,脚手架任务卡落实)。
+
+结论:m1-design 环节一通过 → 进入 m1-tasks.md 任务卡编制(任务卡另需用户确认后 M1 开工)。
 
 ---
 
