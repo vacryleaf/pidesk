@@ -1,6 +1,7 @@
 # pidesk 开发协作规则
 
-> 层级:product-plan.md(做什么)> dev-process.md(怎么流转)> 本文件(日常纪律)。冲突时修订下游并对齐。
+> 层级:product-plan.md(做什么)> dev-process.md(怎么流转)> 本文件(全局纪律)。
+> 过程数据(快照/卡进度/教训)一律在 `docs/engineering/handoff.md`,不进本文件。
 
 ## 身份与语言
 
@@ -10,14 +11,14 @@
 ## 两级 pi 架构
 
 - **主线程**(编排):拆卡、派发、验收、集成、git 提交推送;不写实现代码(例外:E 阶段规划产物由主线程亲写)。
-- **子线程**(执行):一律经 `scripts/dispatch.sh -t "<任务>" -v "<验收命令>"` 派发(返工加 `-c` 附问题清单),禁手工拼 pi 命令;会话隔离于 `/home/harry/.pi-worker`(已关 AGENTS.md/skills/模板注入,thinking off);禁 git、禁新增依赖、只改工作区。
-- 同一卡 >3 轮失败 → 熔断升级用户(详 dev-process §8)。
+- **子线程**(执行):一律经 `scripts/dispatch.sh -t "<任务>" -v "<验收命令>"` 派发(返工加 `-c` 附问题清单),禁手工拼 pi 命令;会话隔离于 `/home/harry/.pi-worker`;禁 git、禁新增依赖、只改工作区。
+- 同一卡 >3 轮失败 → 熔断升级用户(dev-process §8)。
 
-## 任务卡纪律(16k 是物理约束)
+## 任务卡纪律
 
-- 子线程上下文 16k:静态 ~4.5k(系统提示+注入+任务卡),动态余量 ~10k;超预算**拆卡**,不换大上下文(`-m 32k` 须报备理由)。
-- **预消化**:install、版本实查、环境修复等大输出/确定性操作由主线程派发前完成;子线程卡只含"写码 + 单次验收";任务卡自包含(规格内联到照抄级,禁子线程探索性读 docs)。
-- 每卡:单一职责、1~3 实现文件、明确产出路径、验收命令作 `-v`(一律 `2>&1 | tail -20` 截断)。
+- 子线程上下文 16k 为物理约束:超预算**拆卡**,不换大上下文(`-m 32k` 须报备理由)。
+- **预消化**:install、版本实查、环境修复等大输出/确定性操作由主线程派发前完成;子线程卡只含"写码 + 单次验收",规格内联到照抄级,禁子线程探索性读 docs。
+- 每卡:单一职责、1~3 实现文件、明确产出路径、验收命令作 `-v` 并 tail 截断。
 
 ## 验收红线
 
@@ -31,15 +32,7 @@
 
 ## 会话恢复(新主线程按序读)
 
-1. `docs/product-plan.md` → 2. `docs/engineering/dev-process.md` → 3. `docs/engineering/decisions.md` → 4. `docs/engineering/`(pi-protocol/m1-design/m1-tasks) → 5. `git log --oneline -15` → 6. 下方快照。
-
-## 交接快照(每次交接/里程碑必更新)
-
-- **阶段**:M1 编码中——T1 已合入(5e1e6bb),下一卡 T2(ui 底座+desktop 壳,32k)。
-- **已完成**:E 详设全部过环节一;m1-tasks v1.1(14 卡);T1 workspace+shared 全绿(typecheck/test6/build);派发环境已修复:models.json 声明真实窗口+强制 reasoning_effort=none(思考彻底禁用,速度提升~10x)。
-- **T1 状态**:已合入(5e1e6bb);四次失败根因=16k 临界 × pi compaction bug × 量化模型随机长 thinking,均已结构性修复(预消化+reasoning_effort=none+真实窗口声明)。
-- **下一步**:T1 预消化(核验→补齐→install→派最小卡)→ 按序 T2+。
-- **教训固化**:长输出命令必须 tail 截断;pi 16k 临界区是雷区;主线程 bash 工具超时 ≤60s,长任务 `setsid` 后台+轮询;可用 pnpm 在 `~/.npm-global/bin`(PATH 内的可能损坏)。
+1. `docs/engineering/handoff.md`(快照 + 卡进度 + 教训) → 2. `docs/product-plan.md` → 3. `docs/engineering/dev-process.md` → 4. `docs/engineering/decisions.md` → 5. `docs/engineering/` 三产物 → 6. `git log --oneline -15`。
 
 ## 要点速查
 
