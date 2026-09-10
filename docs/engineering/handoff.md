@@ -7,10 +7,11 @@
 
 ## 交接快照
 
-- **阶段**:M1 编码中——T1 已合入,下一卡 T6。
+- **阶段**:M1 编码中——T1 已合入,下一卡 T7a。
 - **已完成**:E 详设全部过环节一(pi-protocol v1.0;m1-design v1.0,环节一裁决:M1 单连接、dev 数据目录 `<仓库根>/.pidesk-dev`);m1-tasks v2.0(26 卡:剩余全部 16k、最小粒度拆分,每卡含主线程前置段)。
-- **卡进度**:T1 ✅ `5e1e6bb`(workspace 根 + @pidesk/shared:typecheck 零错、test 6/6、build 产物齐);T2a ✅ `18df3a2`、T2b ✅ `d28f90b`、T2c ✅ `a08b6c3`、T3 ✅ `698792c`(覆盖93%)、T4 ✅ `24ba8b4`(覆盖87%)、T5a ✅ `61c9ed6`、T5b ✅ `78219b1`+`9085855`(glm兜底);T6~T13b 共 18 张待派。
-- **下一步**:T6(进程状态机,pi-process);前置=内联 pi-protocol §8/§5。
+- **卡进度**:T1 ✅ `5e1e6bb`(workspace 根 + @pidesk/shared:typecheck 零错、test 6/6、build 产物齐);T2a ✅ `18df3a2`、T2b ✅ `d28f90b`、T2c ✅ `a08b6c3`、T3 ✅ `698792c`(覆盖93%)、T4 ✅ `24ba8b4`(覆盖87%)、T5a ✅ `61c9ed6`、T5b ✅ `78219b1`+`9085855`(glm兜底)、T6 ✅ `0774d86`(覆盖90%);T7a~T13b 共 17 张待派。
+- **下一步**:T7a(进程池 mock 版);后续卡经 subagent 工具派发(agent 定义 ~/.pi/agent/agents/:m1-coder-16k 默认 / m1-coder-glm 兜底;任务卡 task 传入,纪律已固化 agent systemPrompt)。
+- **模式切换(2026-09-10)**:主线程已换用 pi subagent 扩展派发(旧 dispatch.sh 退役备用);coverage/ 已出库。
 - **兜底机制已建**:dispatch.sh -m glm = hanhe 远端 glm-5.3-flash(OpenAI Responses,1M ctx);27B 子线程三轮失败即启用。首次实战:T5b 第四轮 glm 一次通过(34/34)。
 - **工具链偏差待记 DR**:electron-vite5 peer 限 vite ^7 → 实配 vite 7.3.6 + plugin-react 5.1.4(m1-design §1 的 vite 8.2.2 不兼容)。
 - **工具链偏差待记 DR**:electron-vite5 peer 限 vite ^7(m1-design §1 写 vite 8.2.2 不兼容)→ 实配 vite 7.3.6 + plugin-react 5.1.4(6.x 要 vite8);T2b 合入时已落,DR 与 m1-design §1 修订待办。
