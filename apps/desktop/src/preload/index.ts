@@ -65,6 +65,13 @@ const bridge = {
     ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_PROVIDER_REMOVE, { id }),
   configDefaultModelSet: (defaultModel?: AppPreferences["defaultModel"]) =>
     ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_DEFAULT_MODEL_SET, { defaultModel }),
+  // ---- skills(M2;preload 仅透传)----
+  configSkillsList: () => ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_SKILLS_LIST, {}),
+  configSkillsImport: () => ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_SKILLS_IMPORT, {}),
+  configSkillsSetEnabled: (id: string, enabled: boolean) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_SKILLS_SET_ENABLED, { id, enabled }),
+  configSkillsRemove: (id: string) =>
+    ipcRenderer.invoke(INVOKE_CHANNELS.CONFIG_SKILLS_REMOVE, { id }),
   // ---- push 事件订阅 ----
   onSessionEvent: (cb: (payload: SessionEventPayload) => void) =>
     subscribe(PUSH_CHANNELS.SESSION_EVENT, cb),

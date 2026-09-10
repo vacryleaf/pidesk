@@ -23,6 +23,10 @@ export const INVOKE_CHANNELS = {
   CONFIG_PROVIDER_UPSERT: "pidesk:config:providerUpsert",
   CONFIG_PROVIDER_REMOVE: "pidesk:config:providerRemove",
   CONFIG_DEFAULT_MODEL_SET: "pidesk:config:defaultModelSet",
+  CONFIG_SKILLS_LIST: "pidesk:config:skillsList",
+  CONFIG_SKILLS_IMPORT: "pidesk:config:skillsImport",
+  CONFIG_SKILLS_SET_ENABLED: "pidesk:config:skillsSetEnabled",
+  CONFIG_SKILLS_REMOVE: "pidesk:config:skillsRemove",
 } as const;
 
 // (C) push 通道:主进程单向推送
@@ -88,6 +92,16 @@ export type ConfigSnapshot = {
   providers: Array<ProviderProfile & { hasKey: boolean }>;
 };
 
+// ---------- skills(M2) ----------
+
+export type SkillInfo = {
+  id: string; // 目录名
+  name: string; // frontmatter/首选 name,缺失回退目录名
+  description?: string;
+  enabled: boolean;
+  hasSkillFile: boolean;
+};
+
 // ---------- (B) invoke:通道 → [请求, 响应] ----------
 
 import type { JsonAgentSessionEvent, ExtensionUIRequest, ExtensionError } from "./protocol";
@@ -133,6 +147,14 @@ export interface InvokeMap {
     { defaultModel?: AppPreferences["defaultModel"] },
     ConfigSnapshot,
   ];
+  // ---- skills(M2) ----
+  [INVOKE_CHANNELS.CONFIG_SKILLS_LIST]: [Record<string, never>, SkillInfo[]];
+  [INVOKE_CHANNELS.CONFIG_SKILLS_IMPORT]: [
+    Record<string, never>,
+    { cancelled: boolean; skills: SkillInfo[] },
+  ];
+  [INVOKE_CHANNELS.CONFIG_SKILLS_SET_ENABLED]: [{ id: string; enabled: boolean }, SkillInfo[]];
+  [INVOKE_CHANNELS.CONFIG_SKILLS_REMOVE]: [{ id: string }, SkillInfo[]];
 }
 
 // ---------- (C) push:主进程 → 渲染进程 ----------
@@ -214,6 +236,16 @@ export interface PideskBridge {
   configDefaultModelSet(
     defaultModel?: InvokeReq<(typeof INVOKE_CHANNELS)["CONFIG_DEFAULT_MODEL_SET"]>["defaultModel"],
   ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_DEFAULT_MODEL_SET"]>>;
+  // ---- skills(M2) ----
+  configSkillsList(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_SKILLS_LIST"]>>;
+  configSkillsImport(): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_SKILLS_IMPORT"]>>;
+  configSkillsSetEnabled(
+    id: string,
+    enabled: boolean,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_SKILLS_SET_ENABLED"]>>;
+  configSkillsRemove(
+    id: string,
+  ): Promise<InvokeRes<(typeof INVOKE_CHANNELS)["CONFIG_SKILLS_REMOVE"]>>;
   // ---- push 事件订阅:收主进程定向推送,返回取消函数 ----
   onSessionEvent(
     cb: (payload: PushMap[(typeof PUSH_CHANNELS)["SESSION_EVENT"]]) => void,

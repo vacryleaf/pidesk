@@ -2,6 +2,7 @@
 // 语义:载荷类型取自 InvokeMap[通道];处理器抛错 → 渲染进程 invoke reject(Electron 默认行为)。
 // push 通道(SESSION_EVENT / PROCESS_STATE)不经此处,由 PiHostManager 内部定向 webContents.send。
 
+import { dialog } from "electron";
 import type { BrowserWindow, IpcMain } from "electron";
 import { INVOKE_CHANNELS, type InvokeMap } from "@pidesk/shared";
 import type { PiHostManager } from "./pi-host-manager.js";
@@ -12,6 +13,7 @@ import {
   setDefaultModel,
   upsertProvider,
 } from "./config-center.js";
+import { importSkill, listSkills, removeSkill, setSkillEnabled } from "./skills-store.js";
 
 /** ipcMain 最小结构(便于测试注入) */
 type IpcMainLike = Pick<IpcMain, "handle">;
@@ -96,4 +98,18 @@ export function registerIpcHandlers(
     setDefaultModel(dataDir, defaultModel);
     return loadConfig(dataDir);
   });
+
+  // ---- skills(M2) ----
+  handle(ipc, INVOKE_CHANNELS.CONFIG_SKILLS_LIST, () => listSkills(dataDir));
+  handle(ipc, INVOKE_CHANNELS.CONFIG_SKILLS_IMPORT, async () => {
+    const r = await dialog.showOpenDialog(win, { properties: ["openDirectory"] });
+    if (r.canceled || r.filePaths.length === 0) {
+      return { cancelled: true, skills: listSkills(dataDir) };
+    }
+    return { cancelled: false, skills: importSkill(dataDir, r.filePaths[0]!) };
+  });
+  handle(ipc, INVOKE_CHANNELS.CONFIG_SKILLS_SET_ENABLED, ({ id, enabled }) =>
+    setSkillEnabled(dataDir, id, enabled),
+  );
+  handle(ipc, INVOKE_CHANNELS.CONFIG_SKILLS_REMOVE, ({ id }) => removeSkill(dataDir, id));
 }
