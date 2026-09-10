@@ -1,10 +1,10 @@
 /**
- * ModelMenu(T11c)—— 输入区左下角模型/思考切换菜单(m1-design §6 + ui-prototype §5.1)。
- * - 触发器:显示 `provider/model:thinking`,模型 id 走 mono(等宽仅限代码数据)。
- * - 弹层:打开时经 listModels 拉取;按 provider 分组平铺(Name + id),当前项用 focus 窄条标注。
+ * ModelMenu(T11c)—— 输入区左下角模型/思考切换菜单(视觉对齐 Wegent §6.4/§6.1)。
+ * - 触发器:静默 text-sm 文本钮,显示 `provider/model:thinking`,模型 id 走 mono(等宽仅限代码数据)。
+ * - 弹层:打开时经 listModels 拉取;按 provider 分组平铺(Name + id),当前项用中性 bg-3 选中态。
  * - 选中模型 → onSetModel(provider,modelId);思考档位子列表按固定顺序过滤可用项 → onSetThinkingLevel(level)。
  * - 空态:列表为空 → 「无可用模型,请在配置中设置连接」;拉取失败 → 同样的空态位展示错误文案。
- * - 视觉走令牌:hairline 边 + bg-1/2 层积,无阴影无渐变;数据拉取全部经 props 注入以便测试。
+ * - 视觉走令牌:12px 圆角 + bg-1 + ring/hairline + lg 阴影;数据拉取全部经 props 注入以便测试。
  */
 import { useEffect, useRef, useState } from "react";
 
@@ -114,17 +114,17 @@ export function ModelMenu({
 
   return (
     <div ref={rootRef} className="relative inline-block">
-      {/* 触发器:provider/ + mono 模型 id + :thinking */}
+      {/* 触发器:静默文本钮,provider/ + mono 模型 id + :thinking */}
       <button
         type="button"
         data-testid="model-menu-trigger"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex cursor-pointer items-center border border-[var(--hairline)] bg-[var(--bg-2)] px-2 py-1 text-[13px] text-[var(--text-1)] hover:border-[var(--focus)]"
+        className="flex h-7 cursor-pointer items-center gap-1 px-1 text-[13px] text-[var(--text-1)] hover:text-[var(--text-0)]"
       >
         <span>{curProvider}/</span>
-        <span className="font-mono text-[var(--text-0)]">{curModelId}</span>
+        <span className="font-mono">{curModelId}</span>
         <span>:{thinkingLevel}</span>
       </button>
 
@@ -132,7 +132,7 @@ export function ModelMenu({
         <div
           data-testid="model-menu-popover"
           role="menu"
-          className="absolute bottom-full left-0 z-40 mb-1 w-[280px] border border-[var(--hairline)] bg-[var(--bg-1)] p-1"
+          className="absolute bottom-full left-0 z-40 mb-1 w-[280px] rounded-[var(--radius-menu)] bg-[var(--bg-1)] p-1 shadow-[var(--shadow-lg)] ring-1 ring-[var(--ring)]"
         >
           {models.length === 0 ? (
             // 空态 / 拉取失败:同一位置给出可操作提示
@@ -141,7 +141,7 @@ export function ModelMenu({
             </div>
           ) : (
             <>
-              {/* 模型列表:provider 分组,当前项 focus 窄条 */}
+              {/* 模型列表:provider 分组,当前项用中性 bg-3 选中态 */}
               {groupByProvider(models).map(([p, list]) => (
                 <div key={p}>
                   <div className="px-2 py-1 text-[12px] text-[var(--text-1)]">{p}</div>
@@ -157,13 +157,11 @@ export function ModelMenu({
                         aria-checked={active}
                         onClick={() => handleSelectModel(m)}
                         className={
-                          "flex w-full cursor-pointer items-center gap-2 border-l-2 px-2 py-1 text-left " +
-                          (active
-                            ? "border-l-[var(--focus)] bg-[var(--bg-2)]"
-                            : "border-l-transparent hover:bg-[var(--bg-2)]")
+                          "flex w-full cursor-pointer items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
+                          (active ? "bg-[var(--bg-3)]" : "hover:bg-[var(--surface-hover)]")
                         }
                       >
-                        <span className="flex-1 truncate text-[13px] text-[var(--text-0)]">
+                        <span className="flex-1 truncate text-[14px] text-[var(--text-0)]">
                           {m.name ?? m.modelId}
                         </span>
                         {m.name && (
@@ -199,13 +197,11 @@ export function ModelMenu({
                           setOpen(false);
                         }}
                         className={
-                          "flex w-full cursor-pointer items-center gap-2 border-l-2 px-2 py-1 text-left " +
-                          (active
-                            ? "border-l-[var(--focus)] bg-[var(--bg-2)]"
-                            : "border-l-transparent hover:bg-[var(--bg-2)]")
+                          "flex w-full cursor-pointer items-center gap-1.5 rounded-[8px] px-2 py-1 text-left " +
+                          (active ? "bg-[var(--bg-3)]" : "hover:bg-[var(--surface-hover)]")
                         }
                       >
-                        <span className="font-mono text-[12px] text-[var(--text-0)]">{lv}</span>
+                        <span className="font-mono text-[14px] text-[var(--text-0)]">{lv}</span>
                       </button>
                     );
                   })}

@@ -1,19 +1,29 @@
-/* 设计令牌(CSS variables) */
+/* 设计令牌(CSS variables)—— 对齐 Wegent DESIGN §4.1/§4.2/§3.2/§3.4/§3.5 */
 :root {
-  --bg-0: #141517;
-  --bg-1: #1b1d20;
-  --bg-2: #222528;
-  --text-0: #e4e6e8;
-  --text-1: #9aa0a6;
-  --hairline: #2e3237;
-  --focus: #4c8dff;
-  --ok: #3fb950;
-  --err: #f85149;
+  /* ——— 表面(对应 Wegent dark:bg-base/surface/popover/muted)——— */
+  --bg-0: #212121; /* 侧栏 / titlebar / tab 表面 */
+  --bg-1: #181818; /* 主内容表面 */
+  --bg-2: #282828; /* elevated / 输入 / 代码 / 浮层 */
+  --bg-3: #303030; /* 内层 muted 表面 */
+
+  /* ——— 文本 / 分隔 / 状态 ——— */
+  --text-0: #ffffff;
+  --text-1: #b3b3b3;
+  --text-2: #808080;
+  --hairline: #2b2b2b;
+  --focus: #339cff; /* focus/link 蓝(§4.2) */
+  --ok: #40c977; /* dark success(§4.2) */
+  --err: #f87171; /* destructive(§4.2) */
   --warn: #d29922;
 
-  /* ——— 语义字阶(对齐 Codex 系密度规范)———
-     正文基线 14px;辅助文本 13px;meta/标签 12px。
-     行高随字阶给定,保证垂直节奏一致。 */
+  /* ——— 中性交互表面(hover/active 用透明叠加,§5.3 hover/active 为中性表面变化)——— */
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --surface-active: rgba(255, 255, 255, 0.1);
+  --ring: rgba(255, 255, 255, 0.12); /* overlay ring / heavy border */
+  --scrim: #00000022;
+
+  /* ——— 语义字阶(§3.2)———
+     正文基线 14/21;辅助 13/19;meta/标签 12/16;强调 16/24。 */
   --text-xs: 12px;
   --lh-xs: 16px;
   --text-sm: 13px;
@@ -22,25 +32,46 @@
   --lh-base: 21px;
   --text-lg: 16px;
   --lh-lg: 24px;
+  /* 标题阶(§3.2 Heading small/medium/large) */
+  --text-xl: 18px;
+  --lh-xl: 24px;
+  --text-2xl: 20px;
+  --lh-2xl: 27px;
+  --text-3xl: 24px;
+  --lh-3xl: 29px;
 
-  /* ——— 语义圆角(形态)———
-     按角色分档,不做全局单一半径。 */
-  --radius-ctl: 8px; /* 控件 / 图标按钮 */
-  --radius-row: 10px; /* 导航行 / 标签容器 */
-  --radius-menu: 12px; /* 菜单 / 浮层 */
-  --radius-composer: 20px; /* 多行输入框 */
+  /* ——— 字体栈 ——— */
+  --font-code: "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace; /* 仅用于代码 / 命令 / 路径 / token 计数 */
 
-  /* UI 层字重:445(需可变字体回退;不支持可变字体时回落 normal) */
+  /* ——— 字重(§3.2:主 UI 字重 445,强调/标题 500)——— */
   --font-weight-ui: 445;
+  --font-weight-medium: 500;
+
+  /* ——— 语义圆角(§3.4 radius ramp)——— */
+  --radius-xs: 2px; /* 微小内嵌标记 */
+  --radius-sm: 4px; /* 紧凑内部元素 */
+  --radius-md: 6px; /* 小控件 */
+  --radius-ctl: 8px; /* 默认控件 / 图标按钮 / 标签内表面 */
+  --radius-row: 10px; /* 侧栏/导航行 / 标签容器 */
+  --radius-menu: 12px; /* 菜单 / 浮层 */
+  --radius-lg: 16px; /* 真卡片边界 */
+  --radius-composer: 20px; /* 多行输入框 / 弹窗 */
+  --radius-xl: 24px; /* 例外大壳面 */
+
+  /* ——— elevation(§3.5,轻投影;页面内容默认无阴影)——— */
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --shadow-md: 0 2px 4px -1px rgb(0 0 0 / 8%);
+  --shadow-lg: 0 4px 8px -2px rgb(0 0 0 / 10%);
+  --shadow-xl: 0 8px 16px -4px rgb(0 0 0 / 12%);
+  --shadow-prominent: 0 0 0 0.5px rgba(255, 255, 255, 0.12), 0 3px 7.5px rgba(0, 0, 0, 0.04),
+    0 0 20px rgba(0, 0, 0, 0.05);
 }
 
 /* 附注:
-   - 字阶:12 / 13 / 14 / 16 / 20px(正文基线 14,行高 1.5)
-   - 语义字阶变量:--text-xs/sm/base/lg 配 --lh-xs/sm/base/lg,
-     正文 14px、辅助 13px、meta 12px。
-   - 字重:UI 层用 --font-weight-ui(445);`font-weight: 445` 需可变字体,
-     非可变字体回退 normal,故声明写作 `font-weight: var(--font-weight-ui, normal)`。
-   - 形态:控件 8px / 行与标签 10px / 菜单 12px / 输入 20px(--radius-*)。
-   - mono 栈:Cascadia Code → JetBrains Mono,
-     仅用于代码 / 命令 / 路径 / token 计数。
-*/
+   - 字阶:12 / 13 / 14 / 16 / 18 / 20 / 24px(正文基线 14,行高 21)。
+   - 语义字阶变量:--text-xs/sm/base/lg(/xl/2xl/3xl)配 --lh-*。
+   - 字重:UI 层用 --font-weight-ui(445);强调/标题用 --font-weight-medium(500)。
+   - 形态:2/4/6/8/10/12/16/20/24px 全档半径(--radius-*),控件 8px、行与标签 10px。
+   - elevation 仅用于 composer/菜单/浮层/浮侧栏/弹窗,禁止 0 18px 44px 类重投影。
+   - mono 栈经 --font-code 消费,等宽仅限代码 / 命令 / 路径 / token 计数。 */

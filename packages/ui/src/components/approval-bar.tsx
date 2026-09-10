@@ -19,7 +19,7 @@ export function ApprovalBar({ summary, onApprove, onReject }: ApprovalBarProps) 
   return (
     <div
       data-testid="approval-bar"
-      className="flex shrink-0 items-center gap-2 border border-[var(--hairline)] bg-[var(--bg-2)] px-2 py-1"
+      className="flex shrink-0 items-center gap-2 rounded-[12px] bg-[var(--bg-2)] p-2 shadow-[var(--shadow-md)] ring-1 ring-[var(--hairline)]"
     >
       {/* 风险摘要:占满剩余宽度,超长省略 */}
       <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--text-0)]" title={summary}>
@@ -29,7 +29,7 @@ export function ApprovalBar({ summary, onApprove, onReject }: ApprovalBarProps) 
       <button
         type="button"
         onClick={onApprove}
-        className="shrink-0 cursor-pointer bg-[var(--focus)] px-3 py-1 text-[13px] text-[var(--bg-0)]"
+        className="h-7 shrink-0 cursor-pointer rounded-[8px] bg-[var(--text-0)] px-3 text-[13px] text-[var(--bg-1)] hover:opacity-80"
       >
         批准
       </button>
@@ -37,7 +37,7 @@ export function ApprovalBar({ summary, onApprove, onReject }: ApprovalBarProps) 
       <button
         type="button"
         onClick={onReject}
-        className="shrink-0 cursor-pointer border border-[var(--hairline)] px-3 py-1 text-[13px] text-[var(--text-0)]"
+        className="h-7 shrink-0 cursor-pointer rounded-[8px] bg-[var(--bg-3)] px-3 text-[13px] text-[var(--text-0)] hover:opacity-80"
       >
         拒绝
       </button>

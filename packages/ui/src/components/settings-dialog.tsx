@@ -7,7 +7,7 @@
  * - ToastHost 渲染在弹层条件分支之外,关窗后 toast 仍能存活到 3s 自散。
  */
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { ToastHost, useToasts } from "./toast";
 
 /** Ollama 预置 baseUrl(选中该类型时固定只读展示) */
@@ -154,7 +154,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
       {open && (
         <div
           data-testid="settings-overlay"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--scrim)]"
           onClick={onClose}
         >
           <div
@@ -162,10 +162,20 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
             aria-modal="true"
             aria-label="模型连接"
             data-testid="settings-dialog"
-            className="w-[560px] max-w-[calc(100vw-32px)] border border-[var(--hairline)] bg-[var(--bg-0)] p-4"
+            className="w-[520px] max-w-[92vw] rounded-[20px] bg-[var(--bg-2)] p-6 shadow-[var(--shadow-lg)] ring-1 ring-[var(--ring)]"
             onClick={(ev) => ev.stopPropagation()}
           >
-            <h2 className="mb-3 text-[16px] text-[var(--text-0)]">模型连接</h2>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[18px] font-medium leading-[24px] text-[var(--text-0)]">模型连接</h2>
+              <button
+                type="button"
+                aria-label="关闭"
+                onClick={onClose}
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] text-[var(--text-1)] hover:opacity-80 hover:text-[var(--text-0)]"
+              >
+                <X size={16} strokeWidth={1.5} />
+              </button>
+            </div>
 
             {/* 连接类型二选一 */}
             <div className="mb-3 flex items-center gap-4">
@@ -192,7 +202,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
             </div>
 
             {/* baseUrl:ollama 固定只读,custom 可编辑 */}
-            <label className="mb-1 block text-[12px] text-[var(--text-1)]">Base URL</label>
+            <label className="mb-1 block text-[13px] text-[var(--text-1)]">Base URL</label>
             <input
               data-testid="settings-baseurl"
               type="text"
@@ -201,13 +211,13 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
               placeholder="https://your-gateway/v1"
               onChange={(ev) => setBaseUrl(ev.target.value)}
               className={
-                "mb-3 h-[28px] w-full border border-[var(--hairline)] bg-[var(--bg-1)] px-2 text-[13px] outline-none focus:border-[var(--focus)] " +
+                "mb-3 h-8 w-full rounded-[8px] border border-[var(--hairline)] bg-[var(--bg-3)] px-3 text-[14px] outline-none focus:ring-1 focus:ring-[var(--focus)] " +
                 (isOllama ? "text-[var(--text-1)]" : "text-[var(--text-0)]")
               }
             />
 
             {/* apiKey:password 型 + 显隐切换;已保存时提示留空不修改 */}
-            <label className="mb-1 block text-[12px] text-[var(--text-1)]">API Key</label>
+            <label className="mb-1 block text-[13px] text-[var(--text-1)]">API Key</label>
             <div className="relative mb-3">
               <input
                 data-testid="settings-apikey"
@@ -215,27 +225,27 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 value={apiKey}
                 placeholder={hasSavedKey ? "已保存,留空不修改" : ""}
                 onChange={(ev) => setApiKey(ev.target.value)}
-                className="h-[28px] w-full border border-[var(--hairline)] bg-[var(--bg-1)] px-2 pr-8 text-[13px] text-[var(--text-0)] outline-none focus:border-[var(--focus)]"
+                className="h-8 w-full rounded-[8px] border border-[var(--hairline)] bg-[var(--bg-3)] px-3 pr-9 text-[14px] text-[var(--text-0)] outline-none focus:ring-1 focus:ring-[var(--focus)]"
               />
               <button
                 type="button"
                 data-testid="settings-apikey-toggle"
                 aria-label={showKey ? "隐藏 API Key" : "显示 API Key"}
                 onClick={() => setShowKey((v) => !v)}
-                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-[var(--text-1)] hover:text-[var(--text-0)]"
+                className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center text-[var(--text-1)] hover:text-[var(--text-0)]"
               >
-                {showKey ? <EyeOff size={14} strokeWidth={1.5} /> : <Eye size={14} strokeWidth={1.5} />}
+                {showKey ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
               </button>
             </div>
 
             {/* 模型 ID */}
-            <label className="mb-1 block text-[12px] text-[var(--text-1)]">模型 ID</label>
+            <label className="mb-1 block text-[13px] text-[var(--text-1)]">模型 ID</label>
             <input
               data-testid="settings-modelid"
               type="text"
               value={modelId}
               onChange={(ev) => setModelId(ev.target.value)}
-              className="mb-3 h-[28px] w-full border border-[var(--hairline)] bg-[var(--bg-1)] px-2 text-[13px] text-[var(--text-0)] outline-none focus:border-[var(--focus)]"
+              className="mb-3 h-8 w-full rounded-[8px] border border-[var(--hairline)] bg-[var(--bg-3)] px-3 text-[14px] text-[var(--text-0)] outline-none focus:ring-1 focus:ring-[var(--focus)]"
             />
 
             {/* 保存凭据:默认不勾 */}
@@ -256,7 +266,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 type="button"
                 data-testid="settings-cancel"
                 onClick={onClose}
-                className="h-[28px] border border-[var(--hairline)] bg-[var(--bg-2)] px-3 text-[13px] text-[var(--text-0)] hover:border-[var(--focus)]"
+                className="h-8 cursor-pointer rounded-[8px] bg-[var(--bg-3)] px-3 text-[14px] text-[var(--text-0)] hover:opacity-80"
               >
                 取消
               </button>
@@ -265,7 +275,7 @@ export function SettingsDialog({ open, onClose, bridge }: SettingsDialogProps) {
                 data-testid="settings-save"
                 disabled={saving}
                 onClick={handleSave}
-                className="h-[28px] border border-[var(--focus)] bg-[var(--bg-2)] px-3 text-[13px] text-[var(--text-0)] hover:bg-[var(--bg-1)] disabled:opacity-50"
+                className="h-8 cursor-pointer rounded-[8px] bg-[var(--text-0)] px-3 text-[14px] text-[var(--bg-1)] hover:opacity-80 disabled:opacity-50"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

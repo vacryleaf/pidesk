@@ -45,8 +45,8 @@ describe("ApprovalBar", () => {
     expect(container.textContent).toContain("允许执行 bash: rm -rf build");
     const buttons = Array.from(container.querySelectorAll("button"));
     expect(buttons.map((b) => b.textContent)).toEqual(["批准", "拒绝"]);
-    // 批准=focus 蓝主按钮
-    expect(buttons[0]?.className).toContain("bg-[var(--focus)]");
+    // 批准=反色中性主按钮
+    expect(buttons[0]?.className).toContain("bg-[var(--text-0)]");
   });
 
   it("点击批准/拒绝分别触发对应回调", () => {

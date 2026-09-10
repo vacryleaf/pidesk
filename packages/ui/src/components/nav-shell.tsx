@@ -16,18 +16,19 @@ const NAV_ITEMS = [
 ] as const;
 
 /**
- * NavShell —— 应用壳布局:左 220px 导航栏(bg-0)+ 主工作区(bg-1),
+ * NavShell —— 应用壳布局:左 300px 导航栏(bg-0)+ 主工作区(bg-1),
  * 两者以 1px hairline 分隔。全部用 CSS 变量令牌,无硬编码色值。
  *
- * 密度对齐 Codex 系规范:导航行高 30px、圆角 10px(--radius-row)、
- * 水平内边距 8px、图标 16px、图标-文字间距 6px、文本 14px(--text-base)、
- * 字重 --font-weight-ui;hover/激活用中性内表面(bg-2),激活项保留 focus 蓝 2px 左窄条。
+ * 密度对齐 Wegent DESIGN §5.3/§6.3:侧栏默认宽 300px;导航行高 30px、
+ * 圆角 10px(--radius-row)、水平内边距 8px、图标 16px、文本 14px(--text-base)、
+ * 字重 --font-weight-ui;hover/激活用中性表面叠加(--surface-hover/--surface-active),
+ * 激活项保留 focus 蓝 2px 左窄条。
  */
 export function NavShell({ children, onOpenSettings }: NavShellProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-1)]">
-      {/* 左侧导航栏:固定 220px,bg-0,右缘 1px hairline */}
-      <nav className="flex w-[220px] shrink-0 flex-col gap-[2px] border-r border-[var(--hairline)] bg-[var(--bg-0)] px-2 py-3">
+      {/* 左侧导航栏:固定 300px(§5.3 默认宽),bg-0,右缘 1px hairline */}
+      <nav className="flex w-[300px] shrink-0 flex-col gap-[2px] border-r border-[var(--hairline)] bg-[var(--bg-0)] px-2 py-3">
         {NAV_ITEMS.map(({ key, label, Icon, active }) => {
           // 配置项:传入 onOpenSettings 时启用(T11b),其余项维持原激活/禁用逻辑
           const enabled = key === "settings" ? Boolean(onOpenSettings) : active;
@@ -41,12 +42,13 @@ export function NavShell({ children, onOpenSettings }: NavShellProps) {
               onClick={settingsEnabled ? onOpenSettings : undefined}
               className={
                 // 行高 30px、圆角 10px、水平内边距 8px、图标-文字间距 6px、文本 14px、字重 --font-weight-ui(fallback normal)
-                // 激活态:focus 蓝 2px 左侧窄条 + bg-2 内表面 + text-0;启用配置项同为 text-0 可点击;禁用态:text-1 色
+                // 激活态:focus 蓝 2px 左侧窄条 + --surface-active 中性表面 + text-0;
+                // 启用配置项同为 text-0,hover 用 --surface-hover;禁用态:text-1 色
                 "flex h-[30px] w-full items-center gap-[6px] rounded-[var(--radius-row)] px-2 text-left text-[length:var(--text-base)] leading-[var(--lh-base)] font-[var(--font-weight-ui,normal)] " +
                 (active
-                  ? "cursor-pointer border-l-2 border-[var(--focus)] bg-[var(--bg-2)] text-[var(--text-0)]"
+                  ? "cursor-pointer border-l-2 border-[var(--focus)] bg-[var(--surface-active)] text-[var(--text-0)]"
                   : settingsEnabled
-                    ? "cursor-pointer border-l-2 border-transparent text-[var(--text-0)] hover:bg-[var(--bg-2)]"
+                    ? "cursor-pointer border-l-2 border-transparent text-[var(--text-0)] hover:bg-[var(--surface-hover)]"
                     : "cursor-default border-l-2 border-transparent text-[var(--text-1)]")
               }
             >

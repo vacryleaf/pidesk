@@ -134,7 +134,7 @@ describe("MessageItem", () => {
     expect(tok?.className).toContain("text-[12px]");
   });
 
-  it("无 tokens 时不渲染计数;hairline 分隔类存在", () => {
+  it("无 tokens 时不渲染计数;user 气泡为 bg-2 + 16px 圆角", () => {
     const { container } = render(
       <MessageItem role="user">
         <p>问</p>
@@ -142,7 +142,8 @@ describe("MessageItem", () => {
     );
     expect(container.querySelector(".font-mono")).toBeNull();
     const article = container.querySelector("article");
-    expect(article?.className).toContain("border-[var(--hairline)]");
-    expect(article?.querySelector("div[class*='max-w-[72ch]']")).not.toBeNull();
+    expect(article?.className).toContain("justify-end");
+    const bubble = article?.querySelector("div[class*='rounded-[16px]']");
+    expect(bubble?.className).toContain("bg-[var(--bg-2)]");
   });
 });

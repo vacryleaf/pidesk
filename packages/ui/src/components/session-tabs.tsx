@@ -18,10 +18,10 @@ export type SessionTabsProps = {
 /**
  * SessionTabs —— 会话标签栏:横向标签(名称 + 关闭 ×)+ 新建按钮(+)。
  *
- * 密度对齐 Codex 系规范:标签高 28px、外圆角 10px(--radius-row)、
+ * 密度对齐 Wegent DESIGN §5.2:标签高 28px、外圆角 10px(--radius-row)、
  * 水平内边距 8px、图标-文字间距 8px、文本 14px(--text-base)、字重 --font-weight-ui。
- * 激活标签用中性内表面(bg-2)+ text-0;非激活透明 + text-1,hover 为 bg-2。
- * 关闭 × 为按钮元素(键盘可达),默认 text-1,hover/focus 显现 text-0。
+ * 激活标签用中性表面叠加(--surface-active)+ text-0;非激活透明 + text-1,hover 为 --surface-hover。
+ * 关闭 × 为按钮元素(键盘可达)28px 命中区,默认 text-1,hover/focus 显现 text-0。
  * 全部用 CSS 变量令牌,无硬编码色值;标签超高时横向滚动。
  */
 export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }: SessionTabsProps) {
@@ -40,8 +40,8 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
               // 标签:高 28px、外圆角 10px、水平内边距 8px、图标-文字间距 8px、文本 14px、字重 --font-weight-ui(fallback normal)
               "flex h-[28px] shrink-0 items-center gap-2 rounded-[var(--radius-row)] px-2 text-[length:var(--text-base)] leading-[var(--lh-base)] font-[var(--font-weight-ui,normal)] " +
               (active
-                ? "bg-[var(--bg-2)] text-[var(--text-0)]"
-                : "bg-transparent text-[var(--text-1)] hover:bg-[var(--bg-2)]")
+                ? "bg-[var(--surface-active)] text-[var(--text-0)]"
+                : "bg-transparent text-[var(--text-1)] hover:bg-[var(--surface-hover)]")
             }
           >
             {/* 标签名:点击切换激活会话 */}
@@ -53,12 +53,12 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
             >
               {session.label}
             </button>
-            {/* 关闭 ×:仅删除该标签对应会话;16px 图标,默认低调,hover/focus 显现 */}
+            {/* 关闭 ×:仅删除该标签对应会话;28px 命中区 + 16px 图标,默认低调,hover/focus 显现 */}
             <button
               type="button"
               aria-label={`关闭 ${session.label}`}
               onClick={() => onClose(session.id)}
-              className="flex h-[20px] w-[20px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-ctl)] text-[var(--text-1)] hover:text-[var(--text-0)] focus-visible:text-[var(--text-0)]"
+              className="flex h-[28px] w-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-ctl)] text-[var(--text-1)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-0)] focus-visible:text-[var(--text-0)]"
             >
               <X size={16} strokeWidth={1.5} />
             </button>
@@ -70,7 +70,7 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
         type="button"
         aria-label="新建会话"
         onClick={onCreate}
-        className="flex h-[28px] w-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-ctl)] text-[var(--text-1)] hover:bg-[var(--bg-2)] hover:text-[var(--text-0)] focus-visible:text-[var(--text-0)]"
+        className="flex h-[28px] w-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-ctl)] text-[var(--text-1)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-0)] focus-visible:text-[var(--text-0)]"
       >
         <Plus size={16} strokeWidth={1.5} />
       </button>

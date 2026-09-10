@@ -5,7 +5,7 @@ import { Wrench } from "lucide-react";
 export type ToolRowStatus = "running" | "ok" | "err";
 
 /**
- * ToolRow —— 工具调用可折叠行(hairline 分隔 + 缩进层级,非卡片):
+ * ToolRow —— 工具调用可折叠过程行(hairline 分隔,非卡片):
  * 图标(Wrench 16px)+ 工具名 + 参数预览(mono 12px)+ 状态。
  * running = 呼吸点(animate-pulse,focus 蓝);ok = ✓ + 耗时(ok 绿);
  * err = err 红,可展开 stderr 块(mono 12px,pre,bg-2,无阴影)。
@@ -55,19 +55,19 @@ export function ToolRow({
   }
 
   return (
-    <div className="border-t border-[var(--hairline)] py-1 pl-6">
+    <div className="rounded-[8px] border-t border-[var(--hairline)] px-2 py-1">
       {/* 折叠行主体:图标 + 工具名 + 参数预览 + 右侧状态 */}
       <div className="flex items-center gap-2">
         <Wrench size={16} strokeWidth={1.5} className="shrink-0 text-[var(--text-1)]" />
         <span className="text-[13px] text-[var(--text-0)]">{toolName}</span>
         {argsPreview != null && (
-          <span className="truncate font-mono text-[12px] text-[var(--text-1)]">{argsPreview}</span>
+          <span className="truncate font-mono text-[12px] text-[var(--text-2)]">{argsPreview}</span>
         )}
         <span className="ml-auto shrink-0">{statusNode}</span>
       </div>
       {/* err 态展开的 stderr 块:mono 12px,pre 保格式 */}
       {open && status === "err" && stderr != null && (
-        <pre className="mt-1 whitespace-pre-wrap rounded-none bg-[var(--bg-2)] p-2 font-mono text-[12px] leading-[1.5] text-[var(--err)]">
+        <pre className="mt-1 whitespace-pre-wrap rounded-[8px] bg-[var(--bg-2)] p-2 font-mono text-[12px] leading-[1.5] text-[var(--err)]">
           {stderr}
         </pre>
       )}

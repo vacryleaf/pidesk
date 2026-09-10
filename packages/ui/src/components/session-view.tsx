@@ -149,13 +149,16 @@ export function SessionView({ actions }: SessionViewProps) {
           <div className="grid min-h-0 flex-1 grid-rows-1">
             <MessageList messages={messages} />
           </div>
-          <div className="shrink-0 p-3">
-            <Composer
-              sending={active.sending}
-              queueCounts={active.queueCounts}
-              onSend={(text) => handleSend(active.id, text)}
-              onAbort={() => handleAbort(active.id)}
-            />
+          {/* Composer 与消息列共用同一 48rem 内容列,横向 gutter 20px(Wegent §5.1/5.5) */}
+          <div className="shrink-0 px-5 pb-3">
+            <div className="mx-auto w-full max-w-[48rem]">
+              <Composer
+                sending={active.sending}
+                queueCounts={active.queueCounts}
+                onSend={(text) => handleSend(active.id, text)}
+                onAbort={() => handleAbort(active.id)}
+              />
+            </div>
           </div>
         </div>
       ) : null}

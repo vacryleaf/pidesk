@@ -9,15 +9,16 @@ export type ComposerProps = {
   onAbort(): void;
 };
 
-/** 行高与最大行数:自动高度按内容撑开,封顶 6 行后内部滚动 */
-const LINE_HEIGHT = 20;
+/** 行高与最大行数:默认两行(14px/21px)起步,自动高度按内容撑开,封顶 6 行后内部滚动 */
+const LINE_HEIGHT = 21;
 const MAX_LINES = 6;
 const TEXTAREA_MAX_H = LINE_HEIGHT * MAX_LINES;
 
 /**
- * Composer —— 消息输入区:受控 textarea(自动高度 ≤6 行)+ 发送按钮。
- * Enter 发送 / Shift+Enter 换行;发送中按钮切 ⏹(Square)且点击调 onAbort;
- * 禁用渐变阴影,全部令牌用色:输入框 bg-2、hairline 边、队列提示 text-1 12px。
+ * Composer —— 消息输入区:受控 textarea(2 行起步,自动高度 ≤6 行)+ 圆形发送按钮。
+ * Enter 发送 / Shift+Enter 换行;发送中按钮切 ⏹(Square)且点击调 onAbort。
+ * 视觉对齐 Wegent §6.2:20px 圆角 elevated 表面(90% 不透明 + 轻模糊)+ prominent 阴影,
+ * 普通态不加可见边,发送按钮中性灰圆钮不用绿色;队列提示 12px text-2。
  */
 export function Composer({ sending, queueCounts, onSend, onAbort }: ComposerProps) {
   const [value, setValue] = useState("");
@@ -53,23 +54,23 @@ export function Composer({ sending, queueCounts, onSend, onAbort }: ComposerProp
 
   return (
     <div className="flex flex-col gap-1">
-      {/* 输入行:bg-2 底 + hairline 边,无渐变无阴影 */}
-      <div className="flex items-end gap-2 border border-[var(--hairline)] bg-[var(--bg-2)] p-2">
+      {/* 输入表面:elevated 90% 表面 + 轻模糊 + prominent 阴影,20px 圆角,普通态无边 */}
+      <div className="flex items-end gap-2 rounded-[var(--radius-composer)] bg-[color-mix(in_srgb,var(--bg-2)_90%,transparent)] p-2 backdrop-blur-sm shadow-[var(--shadow-prominent)]">
         <textarea
           ref={taRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          rows={1}
-          placeholder="输入消息,Enter 发送,Shift+Enter 换行"
+          rows={2}
+          placeholder="随心输入"
           style={{ lineHeight: `${LINE_HEIGHT}px`, maxHeight: TEXTAREA_MAX_H }}
-          className="min-h-[20px] flex-1 resize-none bg-transparent text-[13px] text-[var(--text-0)] outline-none placeholder:text-[var(--text-1)]"
+          className="min-h-[42px] flex-1 resize-none bg-transparent px-3 text-[14px] text-[var(--text-0)] outline-none placeholder:text-[var(--text-1)]"
         />
         <button
           type="button"
           aria-label={sending ? "中止" : "发送"}
           onClick={() => (sending ? onAbort() : trySend())}
-          className="flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-none border border-[var(--hairline)] text-[var(--text-0)]"
+          className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--surface-active)] text-[var(--text-0)]"
         >
           {/* sending 时切 ⏹(Square),否则 ↑(ArrowUp) */}
           {sending ? (
@@ -79,9 +80,9 @@ export function Composer({ sending, queueCounts, onSend, onAbort }: ComposerProp
           )}
         </button>
       </div>
-      {/* 队列计数提示:12px text-1,仅 >0 显示 */}
+      {/* 队列计数提示:12px text-2,仅 >0 显示 */}
       {showQueue && (
-        <div className="text-[12px] text-[var(--text-1)]">
+        <div className="text-[12px] text-[var(--text-2)]">
           队列 · steering {steering} · followUp {followUp}
         </div>
       )}

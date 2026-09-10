@@ -27,7 +27,7 @@ export function ToastHost({ toasts }: { toasts: Toast[] }) {
         <div
           key={toast.id}
           data-testid="toast"
-          className="pointer-events-auto border border-[var(--hairline)] bg-[var(--bg-2)] px-3 py-1 text-[13px] text-[var(--text-0)]"
+          className="pointer-events-auto rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-2)] px-3 py-2 text-[13px] text-[var(--text-0)] shadow-[var(--shadow-lg)]"
         >
           {toast.text}
         </div>

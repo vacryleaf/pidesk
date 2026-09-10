@@ -53,7 +53,7 @@ function MarkdownBody({ text }: { text: string }) {
 }
 
 /**
- * MessageList —— 流式消息列表容器:单列 ≤72ch 左对齐(message-item 自带 max-w),hairline 分隔。
+ * MessageList —— 流式消息列表容器:滚动通栏,内部消息列居中 48rem(20px gutter)。
  * 流式优化:text_delta 即 props.messages 高频变化,经 rAF(16ms)批量 flush 进 state,
  * 同一帧内多次增量只触发一次重渲;卸载时 cancelAnimationFrame 兜底。
  * 末条消息自动滚底,仅当滚动容器已在底部附近,避免打断用户回看。
@@ -104,20 +104,23 @@ export function MessageList({ messages }: { messages: MessageView[] }) {
 
   return (
     <div ref={containerRef} data-testid="message-list" className="overflow-y-auto">
-      {flushed.map((m) => (
-        <MessageItem key={m.id} role={m.role} tokens={m.tokens}>
-          {/* assistant 且 thinking 非空 → 折叠思考块 */}
-          {m.role === "assistant" && m.thinking ? <ThinkingBlock text={m.thinking} /> : null}
-          {/* 工具调用逐条可折叠行 */}
-          {m.tools?.map((t, i) => (
-            <ToolRow key={i} toolName={t.toolName} argsPreview={t.argsPreview} status={t.status} durationMs={t.durationMs} stderr={t.stderr} />
-          ))}
-          {/* 正文 markdown 增量渲染(批量 flush 驱动) */}
-          <MarkdownBody text={m.text} />
-        </MessageItem>
-      ))}
-      {/* 滚底哨兵:始终位于列表末尾 */}
-      <div ref={endRef} data-testid="message-list-end" />
+      {/* 滚动容器通栏;内部消息列居中 48rem + 20px gutter(Wegent §5.1/5.5) */}
+      <div className="mx-auto w-full max-w-[48rem] px-5">
+        {flushed.map((m) => (
+          <MessageItem key={m.id} role={m.role} tokens={m.tokens}>
+            {/* assistant 且 thinking 非空 → 折叠思考块 */}
+            {m.role === "assistant" && m.thinking ? <ThinkingBlock text={m.thinking} /> : null}
+            {/* 工具调用逐条可折叠行 */}
+            {m.tools?.map((t, i) => (
+              <ToolRow key={i} toolName={t.toolName} argsPreview={t.argsPreview} status={t.status} durationMs={t.durationMs} stderr={t.stderr} />
+            ))}
+            {/* 正文 markdown 增量渲染(批量 flush 驱动) */}
+            <MarkdownBody text={m.text} />
+          </MessageItem>
+        ))}
+        {/* 滚底哨兵:始终位于列表末尾(列内) */}
+        <div ref={endRef} data-testid="message-list-end" />
+      </div>
     </div>
   );
 }
