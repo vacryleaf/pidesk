@@ -19,3 +19,11 @@ export type {
   RpcFactoryLike,
   VersionCheckLike,
 } from "./pi-process.js";
+// 多会话进程池(并发上限/空闲回收/崩溃重启退避)(T7a)
+export { PiPool, MAX_SESSIONS, IDLE_RECLAIM_MS, RESTART_BACKOFF_MS, MAX_RESTART_ATTEMPTS } from "./pi-pool.js";
+export type {
+  PoolProcessLike,
+  PoolTimer,
+  PiPoolErrorInfo,
+  PiPoolOptions,
+} from "./pi-pool.js";
