@@ -1,0 +1,28 @@
+{
+  "name": "@pidesk/pi-host",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@pidesk/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.85.1",
+    "@types/node": "22.20.1",
+    "@vitest/coverage-v8": "5.0.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.0"
+  }
+}
