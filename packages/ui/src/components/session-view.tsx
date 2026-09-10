@@ -1,0 +1,164 @@
+import { useRef, useState } from "react";
+import { Composer } from "./composer";
+import { MessageList, type MessageView } from "./message-list";
+import { SessionTabs } from "./session-tabs";
+import { useSessions } from "../state/store-context";
+import type { SessionState } from "../state/session-store";
+
+/** 会话动作桥:session-view 只需这三个写操作(与 window.pidesk 结构兼容子集) */
+export type SessionActionBridge = {
+  sessionCreate(): Promise<{ sessionId: string }>;
+  sessionPrompt(sessionId: string, message: string): Promise<unknown>;
+  sessionAbort(sessionId: string): Promise<unknown>;
+};
+
+/** 取动作桥:显式入参优先,否则读 window.pidesk(非 Electron / 测试环境返回 undefined) */
+function resolveActionBridge(explicit?: SessionActionBridge): SessionActionBridge | undefined {
+  if (explicit) return explicit;
+  const candidate = (globalThis as { pidesk?: Partial<SessionActionBridge> }).pidesk;
+  if (
+    candidate &&
+    typeof candidate.sessionCreate === "function" &&
+    typeof candidate.sessionPrompt === "function" &&
+    typeof candidate.sessionAbort === "function"
+  ) {
+    return candidate as SessionActionBridge;
+  }
+  return undefined;
+}
+
+/** 本地用户消息锚点:at = 发送时刻 store 中已有助手消息条数,渲染时据此插回原位 */
+type UserInsert = { at: number; message: MessageView };
+
+/** 把 store 会话消息与本地用户消息合并成展示序列(保持发送顺序,不丢助手消息) */
+function mergeMessages(session: SessionState, inserts: UserInsert[]): MessageView[] {
+  const byIndex = new Map<number, MessageView[]>();
+  for (const insert of inserts) {
+    const list = byIndex.get(insert.at);
+    if (list) list.push(insert.message);
+    else byIndex.set(insert.at, [insert.message]);
+  }
+  const out: MessageView[] = [];
+  session.messages.forEach((message, index) => {
+    const pending = byIndex.get(index);
+    if (pending) out.push(...pending);
+    out.push(message);
+  });
+  // 已发送但助手尚未开流的用户消息(at 等于当前条数)统一接在末尾
+  const tail = byIndex.get(session.messages.length);
+  if (tail) out.push(...tail);
+  return out;
+}
+
+export type SessionViewProps = {
+  /** 动作桥注入(测试用);缺省读 window.pidesk */
+  actions?: SessionActionBridge;
+};
+
+/**
+ * SessionView(T10b)—— 会话主区:标签栏 + 消息流 + 输入区。
+ * 空态(无会话)显示居中引导文案与「新建会话」按钮,不放假插画。
+ * 用户消息由本层本地维护(store 只承载助手流式消息,见 T10a message_start 分支),
+ * 渲染时按发送时刻的助手消息条数锚点插回原位。
+ */
+export function SessionView({ actions }: SessionViewProps) {
+  const { sessions, dispatch, getSession } = useSessions();
+  const bridge = resolveActionBridge(actions);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [userMessages, setUserMessages] = useState<Record<string, UserInsert[]>>({});
+  // 本地用户消息序号:避免同一毫秒内多次发送产生重复 id
+  const seqRef = useRef(0);
+
+  // 激活会话:activeId 失效(被关闭)时回退到首个会话
+  const active = sessions.find((session) => session.id === activeId) ?? sessions[0] ?? null;
+
+  /** 新建:先经桥建会话,拿到 sessionId 再入 store 并激活 */
+  const handleCreate = () => {
+    if (!bridge) return;
+    void bridge.sessionCreate().then(({ sessionId }) => {
+      dispatch({ type: "SESSION_CREATED", id: sessionId });
+      setActiveId(sessionId);
+    });
+  };
+
+  /** 发送:本地追加用户消息(锚定当前助手消息条数)并下发 prompt */
+  const handleSend = (sessionId: string, text: string) => {
+    const at = getSession(sessionId)?.messages.length ?? 0;
+    const message: MessageView = {
+      id: `${sessionId}#u${seqRef.current++}`,
+      role: "user",
+      text,
+    };
+    setUserMessages((prev) => ({
+      ...prev,
+      [sessionId]: [...(prev[sessionId] ?? []), { at, message }],
+    }));
+    void bridge?.sessionPrompt(sessionId, text);
+  };
+
+  /** 中止:仅下发 sessionAbort,发送态复位由 agent_settled 事件驱动 */
+  const handleAbort = (sessionId: string) => {
+    void bridge?.sessionAbort(sessionId);
+  };
+
+  /** 关闭:渲染层只删状态;进程回收由 main 侧 manager 负责,abort 兜底 */
+  const handleClose = (sessionId: string) => {
+    dispatch({ type: "SESSION_REMOVED", id: sessionId });
+    setUserMessages((prev) => {
+      if (!(sessionId in prev)) return prev;
+      const next = { ...prev };
+      delete next[sessionId];
+      return next;
+    });
+    void bridge?.sessionAbort(sessionId);
+  };
+
+  // 空态:无任何会话
+  if (sessions.length === 0) {
+    return (
+      <div
+        data-testid="session-empty"
+        className="flex h-full flex-col items-center justify-center gap-4"
+      >
+        <p className="text-[13px] text-[var(--text-1)]">输入指令,开始与 pi 对话</p>
+        <button
+          type="button"
+          onClick={handleCreate}
+          className="cursor-pointer border border-[var(--hairline)] px-3 py-1 text-[13px] text-[var(--text-0)]"
+        >
+          新建会话
+        </button>
+      </div>
+    );
+  }
+
+  const messages = active ? mergeMessages(active, userMessages[active.id] ?? []) : [];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <SessionTabs
+        sessions={sessions.map((session) => ({ id: session.id, label: session.label }))}
+        activeId={active?.id ?? null}
+        onSelect={setActiveId}
+        onClose={handleClose}
+        onCreate={handleCreate}
+      />
+      {active ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          {/* grid 单元让 MessageList 双向撑满,其自身 overflow-y-auto 才能生效 */}
+          <div className="grid min-h-0 flex-1 grid-rows-1">
+            <MessageList messages={messages} />
+          </div>
+          <div className="shrink-0 p-3">
+            <Composer
+              sending={active.sending}
+              queueCounts={active.queueCounts}
+              onSend={(text) => handleSend(active.id, text)}
+              onAbort={() => handleAbort(active.id)}
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
