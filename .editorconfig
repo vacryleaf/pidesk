@@ -1,0 +1,31 @@
+root = true
+
+[*.ts]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+
+[*.js]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+
+[*.json]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+
+[*.yaml]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+
+[*.md]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2

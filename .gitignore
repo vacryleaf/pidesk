@@ -16,6 +16,7 @@ release/
 *.snap
 
 # Runtime / local data
+.pidesk-dev/
 resources/pi/*.tar.gz
 resources/pi/pi
 resources/pi/pi.exe
