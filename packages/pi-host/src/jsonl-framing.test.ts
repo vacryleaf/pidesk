@@ -27,8 +27,8 @@ describe("jsonl-framing", () => {
     framer.push(bytes.subarray(zhIdx + 1));
     framer.end();
     expect(lines).toHaveLength(2);
-    expect(JSON.parse(lines[0]).text).toBe("中");
-    expect(JSON.parse(lines[1]).emoji).toBe("😀");
+    expect(JSON.parse(lines[0]!).text).toBe("中");
+    expect(JSON.parse(lines[1]!).emoji).toBe("😀");
   });
 
   it("③ CRLF 行尾:行尾 \\r 被剥离", () => {
@@ -45,8 +45,8 @@ describe("jsonl-framing", () => {
     framer.push(Buffer.from(s1 + "\n" + s2 + "\n"));
     framer.end();
     expect(lines).toHaveLength(2);
-    expect(JSON.parse(lines[0]).sep).toBe("line1\u2028line2");
-    expect(JSON.parse(lines[1]).sep).toBe("a\u2029b");
+    expect(JSON.parse(lines[0]!).sep).toBe("line1\u2028line2");
+    expect(JSON.parse(lines[1]!).sep).toBe("a\u2029b");
   });
 
   it("⑤ 无尾换行的尾行:end 时作为最后一行发出", () => {
@@ -98,6 +98,6 @@ describe("jsonl-framing", () => {
     expect(lines).toEqual([]); // 尚无完整行,且不因残字节出错
     framer.push(b.subarray(mid));
     framer.end();
-    expect(JSON.parse(lines[0])).toEqual({ x: "中" });
+    expect(JSON.parse(lines[0]!)).toEqual({ x: "中" });
   });
 });

@@ -13,3 +13,6 @@ export * from "./ipc";
 
 // 脱敏工具
 export { redact } from "./redact";
+
+// 数据目录解析(pure function)
+export { resolveDataDir, findRepoRoot, DEV_DATA_DIR_NAME } from "./paths";
