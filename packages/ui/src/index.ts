@@ -7,3 +7,5 @@ export { Placeholder } from "./pages/placeholder";
 export { SessionView } from "./components/session-view";
 export { SessionTabs } from "./components/session-tabs";
 export { SessionsProvider, useSessions } from "./state/store-context";
+// M2 整页配置中心(树形导航 + 模型/凭据 + 代理)
+export { ConfigCenter } from "./pages/config-center";
