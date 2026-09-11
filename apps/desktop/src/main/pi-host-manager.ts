@@ -70,6 +70,7 @@ export class PiHostManager {
     const proc = (await this.pool.acquire(sessionId, { env: this.proxyEnv() })) as HostProcessLike;
     const record: SessionRecord = { process: proc, win, pendingUiRequests: [] };
     this.sessions.set(sessionId, record);
+    await this.applyDefaultModel(proc);
     this.wireProcess(sessionId, record);
     return sessionId;
   }
@@ -156,6 +157,20 @@ export class PiHostManager {
     if (proxy.http) env.HTTP_PROXY = proxy.http;
     if (proxy.https) env.HTTPS_PROXY = proxy.https;
     return env;
+  }
+
+  /** 应用 config-center app.json 的 defaultModel(provider/modelId/thinkingLevel);失败仅告警不中断 */
+  private async applyDefaultModel(proc: HostProcessLike): Promise<void> {
+    try {
+      const { defaultModel } = loadConfig(this.dataDir).app;
+      if (!defaultModel?.provider || !defaultModel?.modelId) return;
+      await proc.request("set_model", { provider: defaultModel.provider, modelId: defaultModel.modelId });
+      if (defaultModel.thinkingLevel) {
+        await proc.request("set_thinking_level", { level: defaultModel.thinkingLevel });
+      }
+    } catch (err) {
+      console.warn("[pi-host] 默认模型应用失败:", err);
+    }
   }
 
   /** apiKey 脱敏:存在则替换为 "********"(M1 简化:不做前 4 后 4 形态,不回显真实值) */
