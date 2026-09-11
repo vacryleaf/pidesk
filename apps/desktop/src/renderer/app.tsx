@@ -10,7 +10,7 @@ export default function App() {
     <SessionsProvider>
       <DevDomProbe />
       <WindowControls />
-      <NavShell onOpenSettings={() => setSettingsOpen(true)}>
+      <NavShell onOpenSettings={() => setSettingsOpen(true)} activeKey={settingsOpen ? "settings" : "sessions"}>
         {settingsOpen ? <ConfigCenter onClose={() => setSettingsOpen(false)} /> : <SessionView />}
       </NavShell>
     </SessionsProvider>
