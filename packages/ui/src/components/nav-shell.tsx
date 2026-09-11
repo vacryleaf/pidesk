@@ -9,6 +9,8 @@ export type NavShellProps = {
   onOpenSettings?(): void;
   /** 传入则「会话」项启用为可点击(从配置中心返回会话视图);缺省保持禁用占位 */
   onOpenSessions?(): void;
+  /** 内容区不加圆角面板(配置态:ConfigCenter 自带二级菜单/内容双面板),缺省 false */
+  contentBare?: boolean;
 };
 
 // 导航项定义:激活(会话)与禁用(其余三个,本阶段不可点击)
@@ -27,15 +29,11 @@ const NAV_ITEMS = [
  * 图标 16px、文本 14px;激活项用中性表面叠加(--surface-active)+ text-0,
  * 禁用项 text-1;无 hover 效果(鼠标移入不改变样式)。
  */
-export function NavShell({ children, onOpenSettings, onOpenSessions, activeKey }: NavShellProps) {
+export function NavShell({ children, onOpenSettings, onOpenSessions, activeKey, contentBare }: NavShellProps) {
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-1)]">
-      {/* 左侧导航栏:固定 240px,bg-0,右缘 1px hairline */}
-      <nav className="relative flex h-full w-[200px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] px-1.5">
-        {/* 产品标题区 */}
-        <div className="titlebar-drag flex h-[52px] shrink-0 items-center justify-between px-2">
-          <span className="min-w-0 truncate text-[18px] font-semibold leading-6 text-[var(--text-0)]">pidesk</span>
-        </div>
+    <div className="flex h-full min-h-0 w-full gap-2 bg-transparent">
+      {/* 左侧导航:圆角矩阵面板 */}
+      <nav className="flex w-[200px] shrink-0 flex-col rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-0)] p-2">
         {NAV_ITEMS.map(({ key, label, Icon, active }) => {
           // 激活项由外部 activeKey 决定(缺省 "sessions");禁用逻辑保持不变
           const isActive = key === (activeKey ?? "sessions");
@@ -57,7 +55,7 @@ export function NavShell({ children, onOpenSettings, onOpenSessions, activeKey }
               className={
                 // 行高 30px、圆角 10px、水平内边距 8px、图标-文字间距 6px、文本 14px
                 // 激活/启用配置项:text-0;禁用态:text-1 色;无 hover
-                "titlebar-no-drag flex h-[30px] w-full items-center gap-2 rounded-[10px] px-2 text-left text-[14px] leading-5 " +
+                "flex h-[30px] w-full items-center gap-2 rounded-[10px] px-2 text-left text-[14px] leading-5 " +
                 (isActive
                   ? "bg-[var(--surface-active)] text-[var(--text-0)]"
                   : clickable
@@ -74,7 +72,15 @@ export function NavShell({ children, onOpenSettings, onOpenSessions, activeKey }
       </nav>
 
       {/* 主工作区:占满剩余空间,bg-1 */}
-      <main className="flex min-w-0 flex-1 flex-col bg-[var(--bg-1)]">{children}</main>
+      <main
+        className={
+          contentBare
+            ? "flex min-w-0 flex-1 flex-col overflow-hidden bg-transparent"
+            : "flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-1)]"
+        }
+      >
+        {children}
+      </main>
     </div>
   );
 }

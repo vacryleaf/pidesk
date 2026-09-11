@@ -28,7 +28,7 @@ export function SessionTabs({ sessions, activeId, onSelect, onClose, onCreate }:
   return (
     <div
       data-testid="session-tabs"
-      className="titlebar-drag flex h-[52px] shrink-0 items-center gap-1 overflow-x-auto bg-[var(--bg-1)] px-6 pr-[148px]"
+      className="flex h-[52px] shrink-0 items-center gap-1 overflow-x-auto bg-[var(--bg-1)] px-6"
     >
       {sessions.map((session) => {
         const active = session.id === activeId;

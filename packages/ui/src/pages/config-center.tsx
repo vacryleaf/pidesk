@@ -467,12 +467,10 @@ export function ConfigCenter({ bridge }: ConfigCenterProps) {
   return (
     <div
       data-testid="config-center"
-      className="flex h-full min-h-0 flex-col bg-[var(--bg-1)] text-[var(--text-0)]"
+      className="flex h-full min-h-0 gap-2 bg-transparent text-[var(--text-0)]"
     >
-      {/* 顶栏下方:左树形导航 + 右内容 */}
-      <div className="flex min-h-0 flex-1">
       {/* 左侧树形导航 */}
-      <aside className="flex w-[160px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] p-2">
+      <aside className="flex w-[160px] shrink-0 flex-col gap-1 overflow-y-auto rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-0)] p-2">
         {SECTIONS.map(({ key, label }) => (
           <button
             key={key}
@@ -492,7 +490,7 @@ export function ConfigCenter({ bridge }: ConfigCenterProps) {
       </aside>
 
       {/* 右侧内容 */}
-      <div className="min-w-0 flex-1 overflow-y-auto p-6 pt-4 pr-[148px]">
+      <div className="min-w-0 flex-1 overflow-y-auto rounded-[12px] border border-[var(--hairline)] bg-[var(--bg-1)] p-6 pt-4">
         {section === "models" && (
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -960,7 +958,6 @@ export function ConfigCenter({ bridge }: ConfigCenterProps) {
             <p className="text-[13px] text-[var(--text-1)]">M2 后续卡片接入</p>
           </section>
         )}
-      </div>
       </div>
 
       <ToastHost toasts={toasts} />

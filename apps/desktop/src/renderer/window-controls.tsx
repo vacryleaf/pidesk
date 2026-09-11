@@ -56,7 +56,7 @@ export function WindowControls() {
   return (
     <div
       data-testid="window-frame-controls"
-      className="titlebar-no-drag fixed right-0 top-0 z-50 flex h-[52px] items-center"
+      className="titlebar-no-drag flex h-[52px] shrink-0 items-center"
     >
       <button
         type="button"
