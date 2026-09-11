@@ -469,14 +469,10 @@ export function ConfigCenter({ bridge }: ConfigCenterProps) {
       data-testid="config-center"
       className="flex h-full min-h-0 flex-col bg-[var(--bg-1)] text-[var(--text-0)]"
     >
-      {/* 顶部 52px 拖拽顶栏:仅作 titlebar 拖拽区,不放交互元素;pr 预留右上窗口控制按钮区 */}
-      <header className="titlebar-drag flex h-[52px] shrink-0 items-center bg-[var(--bg-1)] pl-4 pr-[148px]">
-      </header>
-
       {/* 顶栏下方:左树形导航 + 右内容 */}
       <div className="flex min-h-0 flex-1">
       {/* 左侧树形导航 */}
-      <aside className="flex w-[180px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] p-2">
+      <aside className="flex w-[160px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] p-2">
         {SECTIONS.map(({ key, label }) => (
           <button
             key={key}
@@ -496,7 +492,7 @@ export function ConfigCenter({ bridge }: ConfigCenterProps) {
       </aside>
 
       {/* 右侧内容 */}
-      <div className="min-w-0 flex-1 overflow-y-auto p-6 pt-4">
+      <div className="min-w-0 flex-1 overflow-y-auto p-6 pt-4 pr-[148px]">
         {section === "models" && (
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between">

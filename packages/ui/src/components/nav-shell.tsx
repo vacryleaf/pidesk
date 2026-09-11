@@ -31,7 +31,7 @@ export function NavShell({ children, onOpenSettings, onOpenSessions, activeKey }
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-1)]">
       {/* 左侧导航栏:固定 240px,bg-0,右缘 1px hairline */}
-      <nav className="relative flex h-full w-[240px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] px-1.5">
+      <nav className="relative flex h-full w-[200px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] px-1.5">
         {/* 产品标题区 */}
         <div className="titlebar-drag flex h-[52px] shrink-0 items-center justify-between px-2">
           <span className="min-w-0 truncate text-[18px] font-semibold leading-6 text-[var(--text-0)]">pidesk</span>
