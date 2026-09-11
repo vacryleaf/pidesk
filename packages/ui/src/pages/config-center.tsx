@@ -473,7 +473,7 @@ export function ConfigCenter({ onClose, bridge }: ConfigCenterProps) {
       className="flex h-full min-h-0 flex-col bg-[var(--bg-1)] text-[var(--text-0)]"
     >
       {/* 顶部 52px 拖拽顶栏:仅作 titlebar 拖拽区,不放交互元素;pr 预留右上窗口控制按钮区 */}
-      <header className="titlebar-drag flex h-[52px] shrink-0 items-center border-b border-[var(--hairline)] bg-[var(--bg-1)] pl-4 pr-[148px]">
+      <header className="titlebar-drag flex h-[52px] shrink-0 items-center bg-[var(--bg-1)] pl-4 pr-[148px]">
         <span className="truncate text-[14px] font-medium text-[var(--text-0)]">配置中心</span>
       </header>
 

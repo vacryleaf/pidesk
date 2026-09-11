@@ -29,9 +29,9 @@ export function NavShell({ children, onOpenSettings, activeKey }: NavShellProps)
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-1)]">
       {/* 左侧导航栏:固定 240px,bg-0,右缘 1px hairline */}
-      <nav className="relative flex h-full w-[240px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] px-1.5 pt-1.5">
+      <nav className="relative flex h-full w-[240px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] px-1.5">
         {/* 产品标题区 */}
-        <div className="mb-1 flex h-9 shrink-0 items-center justify-between px-2">
+        <div className="titlebar-drag flex h-[52px] shrink-0 items-center justify-between px-2">
           <span className="min-w-0 truncate text-[18px] font-semibold leading-6 text-[var(--text-0)]">pidesk</span>
         </div>
         {NAV_ITEMS.map(({ key, label, Icon, active }) => {
@@ -50,7 +50,7 @@ export function NavShell({ children, onOpenSettings, activeKey }: NavShellProps)
               className={
                 // 行高 30px、圆角 10px、水平内边距 8px、图标-文字间距 6px、文本 14px
                 // 激活/启用配置项:text-0;禁用态:text-1 色;无 hover
-                "flex h-[30px] w-full items-center gap-2 rounded-[10px] px-2 text-left text-[14px] leading-5 " +
+                "titlebar-no-drag flex h-[30px] w-full items-center gap-2 rounded-[10px] px-2 text-left text-[14px] leading-5 " +
                 (isActive
                   ? "bg-[var(--surface-active)] text-[var(--text-0)]"
                   : settingsEnabled
