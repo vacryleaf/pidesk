@@ -7,6 +7,8 @@ export type NavShellProps = {
   activeKey?: string;
   /** 传入则「配置」项启用为可点击(T11b:打开模型连接设置弹层);缺省保持禁用占位 */
   onOpenSettings?(): void;
+  /** 传入则「会话」项启用为可点击(从配置中心返回会话视图);缺省保持禁用占位 */
+  onOpenSessions?(): void;
 };
 
 // 导航项定义:激活(会话)与禁用(其余三个,本阶段不可点击)
@@ -25,7 +27,7 @@ const NAV_ITEMS = [
  * 图标 16px、文本 14px;激活项用中性表面叠加(--surface-active)+ text-0,
  * 禁用项 text-1;无 hover 效果(鼠标移入不改变样式)。
  */
-export function NavShell({ children, onOpenSettings, activeKey }: NavShellProps) {
+export function NavShell({ children, onOpenSettings, onOpenSessions, activeKey }: NavShellProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-1)]">
       {/* 左侧导航栏:固定 240px,bg-0,右缘 1px hairline */}
@@ -37,23 +39,28 @@ export function NavShell({ children, onOpenSettings, activeKey }: NavShellProps)
         {NAV_ITEMS.map(({ key, label, Icon, active }) => {
           // 激活项由外部 activeKey 决定(缺省 "sessions");禁用逻辑保持不变
           const isActive = key === (activeKey ?? "sessions");
-          // 配置项:传入 onOpenSettings 时启用(T11b),其余项维持原激活/禁用逻辑
-          const enabled = key === "settings" ? Boolean(onOpenSettings) : active;
-          const settingsEnabled = key === "settings" && enabled;
+          // 「会话」「配置」传入对应回调时启用;workflows/runs 维持禁用占位
+          const enabled =
+            key === "sessions"
+              ? Boolean(onOpenSessions)
+              : key === "settings"
+                ? Boolean(onOpenSettings)
+                : active;
+          const clickable = enabled ? (key === "sessions" ? onOpenSessions : onOpenSettings) : undefined;
           return (
             <button
               key={key}
               type="button"
               disabled={!enabled}
               aria-current={isActive ? "page" : undefined}
-              onClick={settingsEnabled ? onOpenSettings : undefined}
+              onClick={clickable}
               className={
                 // 行高 30px、圆角 10px、水平内边距 8px、图标-文字间距 6px、文本 14px
                 // 激活/启用配置项:text-0;禁用态:text-1 色;无 hover
                 "titlebar-no-drag flex h-[30px] w-full items-center gap-2 rounded-[10px] px-2 text-left text-[14px] leading-5 " +
                 (isActive
                   ? "bg-[var(--surface-active)] text-[var(--text-0)]"
-                  : settingsEnabled
+                  : clickable
                     ? "bg-transparent text-[var(--text-0)]"
                     : "bg-transparent text-[var(--text-1)]")
               }

@@ -5,7 +5,6 @@
  * - 全部 Wegent 令牌 CSS 变量;无 hover / cursor(项目全局 cursor default)。
  */
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
 import { ToastHost, useToasts } from "../components/toast";
 
 // ---------- 桥数据类型(结构对齐 shared/ipc.ts,ui 内最小声明) ----------
@@ -229,13 +228,11 @@ const btnGhost =
 // ---------- 主组件 ----------
 
 export type ConfigCenterProps = {
-  /** 返回会话视图(左上角返回按钮) */
-  onClose(): void;
   /** 桥注入(测试用);缺省读 window.pidesk 子集 */
   bridge?: ConfigBridge;
 };
 
-export function ConfigCenter({ onClose, bridge }: ConfigCenterProps) {
+export function ConfigCenter({ bridge }: ConfigCenterProps) {
   const resolved = resolveBridge(bridge);
   const { toasts, push } = useToasts();
   const [section, setSection] = useState<SectionKey>("models");
@@ -474,24 +471,12 @@ export function ConfigCenter({ onClose, bridge }: ConfigCenterProps) {
     >
       {/* 顶部 52px 拖拽顶栏:仅作 titlebar 拖拽区,不放交互元素;pr 预留右上窗口控制按钮区 */}
       <header className="titlebar-drag flex h-[52px] shrink-0 items-center bg-[var(--bg-1)] pl-4 pr-[148px]">
-        <span className="truncate text-[14px] font-medium text-[var(--text-0)]">配置中心</span>
       </header>
 
       {/* 顶栏下方:左树形导航 + 右内容 */}
       <div className="flex min-h-0 flex-1">
       {/* 左侧树形导航 */}
       <aside className="flex w-[180px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--bg-0)] p-2">
-        <div className="flex h-9 shrink-0 items-center justify-between px-2">
-          <span className="text-[14px] font-semibold text-[var(--text-0)]">配置中心</span>
-          <button
-            type="button"
-            aria-label="返回会话"
-            onClick={onClose}
-            className="text-[var(--text-1)]"
-          >
-            <ArrowLeft size={16} strokeWidth={1.5} />
-          </button>
-        </div>
         {SECTIONS.map(({ key, label }) => (
           <button
             key={key}
