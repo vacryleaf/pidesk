@@ -12,8 +12,8 @@ export default function App() {
       <DevDomProbe />
       <div className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--bg-1)]">
         {/* 顶部整行标题栏:左侧产品名,右侧窗口控制按钮 */}
-        <header className="titlebar-drag flex h-[52px] w-full shrink-0 items-center justify-between bg-[var(--bg-0)] pl-3">
-          <span className="text-[18px] font-semibold leading-6 text-[var(--text-0)]">pidesk</span>
+        <header className="titlebar-drag flex h-[26px] w-full shrink-0 items-center justify-between bg-[var(--bg-0)] pl-2">
+          <span className="text-[12px] font-semibold leading-4 text-[var(--text-0)]">pidesk</span>
           <WindowControls />
         </header>
         {/* 下方区域:圆角导航面板 + 圆角内容面板 */}

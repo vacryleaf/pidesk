@@ -2,10 +2,10 @@
 // 浏览器环境无 bridge 时按钮 no-op;图标切换跟随窗口最大化状态(挂载与 resize 时同步)。
 import { useEffect, useState } from "react";
 
-/** 16px 线性图标(内联 SVG,desktop 未依赖 lucide-react) */
+/** 12px 线性图标(内联 SVG,desktop 未依赖 lucide-react) */
 const iconProps = {
-  width: 16,
-  height: 16,
+  width: 12,
+  height: 12,
   viewBox: "0 0 24 24",
   fill: "none",
   stroke: "currentColor",
@@ -37,7 +37,7 @@ const XIcon = () => (
 );
 
 const btnClass =
-  "flex h-[30px] w-[46px] shrink-0 items-center justify-center border-0 bg-transparent p-0 text-[var(--text-1)]";
+  "flex h-[26px] w-[38px] shrink-0 items-center justify-center border-0 bg-transparent p-0 text-[var(--text-1)]";
 
 export function WindowControls() {
   const [maximized, setMaximized] = useState(false);
@@ -56,7 +56,7 @@ export function WindowControls() {
   return (
     <div
       data-testid="window-frame-controls"
-      className="titlebar-no-drag flex h-[52px] shrink-0 items-center"
+      className="titlebar-no-drag flex h-[26px] shrink-0 items-center"
     >
       <button
         type="button"
