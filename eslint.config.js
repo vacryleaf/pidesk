@@ -3,7 +3,7 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**", "**/out/**", "resources/**"] },
+  { ignores: ["**/.pidesk-dev/**", "**/dist/**", "**/node_modules/**", "**/coverage/**", "**/out/**", "resources/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   // TS 项目:no-undef 交由 tsc 管理(ESLint 无法解析 TS 类型与 DOM 全局)
